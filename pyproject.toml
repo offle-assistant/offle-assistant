@@ -1,0 +1,18 @@
+[project]
+name = "tar-assistant"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "beatoven9",email = "reeedt@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+    "ollama (>=0.4.5,<0.5.0)",
+    "llama-index (>=0.12.9,<0.13.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
