@@ -15,7 +15,7 @@ class DocBot:
         message_chain = []
         while True:
 
-            user_response = input("Input: \n")
+            user_response = input("Input: ")
             user_message = {"role": "user", "content": user_response}
             message_chain.append(self.system_prompt_message)
             message_chain.append(user_message)
@@ -26,15 +26,21 @@ class DocBot:
             chat_response = ollama.chat(
                  model='llama3.2',
                  messages=message_chain,
-                 stream=False,
+                 stream=True,
             )
 
             print()
             print("Assistant: ")
-            print(chat_response['message']['content'])
+            response_text = ""
+            for chunk in chat_response:
+                chunk_content = chunk['message']['content']
+                print(chunk_content, end='', flush=True)
+                response_text += chunk_content
 
+            print()
+            print()
             chat_message = {
                 "role": "assistant",
-                "content": chat_response['message']['content']
+                "content": response_text
             }
             message_chain.append(chat_message)
