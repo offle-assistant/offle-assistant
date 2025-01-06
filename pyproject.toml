@@ -1,9 +1,12 @@
 [project]
-name = "tar-assistant"
+name = "tar_assistant"
 version = "0.1.0"
 description = ""
 authors = [
     {name = "beatoven9",email = "reeedt@gmail.com"}
+]
+packages = [
+    {include = "tar_assistant"}
 ]
 readme = "README.md"
 requires-python = ">=3.13,<4.0"
