@@ -1,4 +1,4 @@
-from tar_assistant.bot import DocBot
+from assistant.bot import DocBot
 
 
 def main():
