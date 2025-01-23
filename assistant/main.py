@@ -1,7 +1,6 @@
 import pathlib
 import argparse
 
-from assistant.bot import Bot
 from assistant.persona import get_persona_strings, Persona
 
 
@@ -50,16 +49,15 @@ def chat(args):
             config_path=CONFIG_PATH
         )
 
-        assistant = Bot(persona)
-        assistant.chat()
+        persona.chat()
+
     else:
         persona: Persona = Persona(
             persona_id=persona_id,
             config_path=CONFIG_PATH
         )
 
-        assistant = Bot(persona)
-        assistant.chat()
+        persona.chat()
 
 
 if __name__ == "__main__":
