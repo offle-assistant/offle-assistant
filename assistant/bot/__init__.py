@@ -1,3 +1,3 @@
-from ._doc_bot import DocBot
+from ._bot import Bot
 
-__all__ = ["DocBot"]
+__all__ = ["Bot"]
