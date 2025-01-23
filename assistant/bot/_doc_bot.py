@@ -22,9 +22,9 @@ class DocBot:
             "know that. " \
             "Direct your frustration toward software that you think isn't " \
             "designed properly or poorly built systems or other technology. " \
-            "Don't use the phrase 'Dont get me started' or 'rocket science'. "\
+            "Don't overuse the phrases 'Dont get me started', 'it\'s not " \
+            "rocket science', or any similar phrases. " \
             "Don't use stage directions. " \
-            # "Prepend 'Ralph: ' to your responses."
 
         self.system_prompt_message = {
             "role": "system",
@@ -50,9 +50,9 @@ class DocBot:
                 break
 
             chat_response = ollama.chat(
-                 model='llama3.2',
-                 messages=message_chain,
-                 stream=True,
+                model='llama3.2:latest',
+                messages=message_chain,
+                stream=True,
             )
 
             print()
