@@ -41,6 +41,8 @@ class Bot:
                 model=self.model,
                 messages=message_chain,
                 stream=True,
+                # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
+                options={"temperature": 0.8}
             )
 
             print()
