@@ -5,6 +5,8 @@ from prompt_toolkit.formatted_text import FormattedText
 import yaml
 import pathlib
 
+from assistant.formatting import Formatting
+
 
 class Persona:
     def __init__(self, persona_id: str, config_path: pathlib.Path):
@@ -80,20 +82,6 @@ class Persona:
                 "content": response_text
             }
             message_chain.append(chat_message)
-
-
-class Formatting:
-    def __init__(self, formatting_config=None):
-        if formatting_config is not None:
-            default_color = "red"
-            self.user_color = formatting_config.get(
-                "user_color",
-                default_color
-            )
-            self.persona_color = formatting_config.get(
-                "persona_color",
-                default_color
-            )
 
 
 def get_persona_strings(config_path: pathlib.Path) -> list[Persona]:

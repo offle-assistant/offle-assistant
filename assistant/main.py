@@ -15,8 +15,15 @@ def main():
         required=True
     )
 
-    parser_list = subparsers.add_parser("list", help="List available personas")
-    parser_list.set_defaults(func=list_personas)
+    parser_persona = subparsers.add_parser(
+        "persona",
+        help="Subcommand related to managing personas."
+    )
+    parser_persona.add_argument(
+        "--list", "-l",
+        action="store_true",
+    )
+    parser_persona.set_defaults(func=list_personas)
 
     # Subcommand: chat
     parser_chat = subparsers.add_parser(
