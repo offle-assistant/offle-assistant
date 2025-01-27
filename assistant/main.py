@@ -1,6 +1,10 @@
 import pathlib
 import argparse
 
+from prompt_toolkit import print_formatted_text as fprint
+from prompt_toolkit import prompt
+from prompt_toolkit.formatted_text import FormattedText
+
 from assistant.persona import get_persona_strings, Persona
 
 
@@ -47,9 +51,9 @@ def main():
 def list_personas(args):  # This is janky, but I'll replace it later.
     persona_strings = get_persona_strings(CONFIG_PATH)
     for string in persona_strings:
-        print("-----" * 15)
-        print(string)
-        print("-----" * 15)
+        fprint("-----" * 15)
+        fprint(string)
+        fprint("-----" * 15)
 
 
 def chat(args):
@@ -61,7 +65,23 @@ def chat(args):
             config_path=CONFIG_PATH
         )
 
-        persona.chat()
+        while True:
+
+            user_prompt = FormattedText([
+                (f"fg:{persona.formatting.user_color} bold", "User: ")
+            ])
+            user_response = prompt(user_prompt)
+
+            ralph_prompt = FormattedText([
+                (
+                    f"fg:{persona.formatting.persona_color} bold",
+                    f"{persona.name}: "
+                )
+            ])
+
+            fprint(ralph_prompt, end='', flush=True)
+            for chunk in persona.chat(user_response):
+                fprint(chunk, end='', flush=True)
 
     else:  # Load the persona provided.
         persona: Persona = Persona(
@@ -69,7 +89,33 @@ def chat(args):
             config_path=CONFIG_PATH
         )
 
-        persona.chat()
+        while True:
+
+            user_prompt = FormattedText([
+                (f"fg:{persona.formatting.user_color} bold", "User: ")
+            ])
+            user_response = prompt(user_prompt)
+
+            if user_response == "\\end":
+                break
+
+            ralph_prompt = FormattedText([
+                (
+                    f"fg:{persona.formatting.persona_color} bold",
+                    f"{persona.name}: "
+                )
+            ])
+
+            # Non-streamed version of response
+            # fprint(ralph_prompt, end='', flush=True)
+            # fprint(persona.chat(user_response, stream=False))
+
+            fprint()
+            # Streamed version of response
+            fprint(ralph_prompt, end='', flush=True)
+            for chunk in persona.chat(user_response, stream=True):
+                fprint(chunk, end='', flush=True)
+            fprint("\n")
 
 
 if __name__ == "__main__":
