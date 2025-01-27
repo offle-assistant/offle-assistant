@@ -41,6 +41,12 @@ def main():
         "--persona", "-p", type=str,
         help="Specify the persona name"
     )
+    parser_chat.add_argument(
+        "--no_stream",
+        action="store_true",
+        help="Disables text streaming. Response will print to output "
+        "after the entire message has been generated."
+    )
     parser_chat.set_defaults(func=chat)
 
     # Parse arguments and call the appropriate function
@@ -106,16 +112,19 @@ def chat(args):
                 )
             ])
 
-            # Non-streamed version of response
-            # fprint(ralph_prompt, end='', flush=True)
-            # fprint(persona.chat(user_response, stream=False))
-
-            fprint()
-            # Streamed version of response
-            fprint(ralph_prompt, end='', flush=True)
-            for chunk in persona.chat(user_response, stream=True):
-                fprint(chunk, end='', flush=True)
-            fprint("\n")
+            if args.no_stream is True:
+                # Non-streamed version of response
+                fprint()
+                fprint(ralph_prompt, end='', flush=True)
+                fprint(persona.chat(user_response, stream=False))
+                fprint()
+            else:
+                # Streamed version of response
+                fprint()
+                fprint(ralph_prompt, end='', flush=True)
+                for chunk in persona.chat(user_response, stream=True):
+                    fprint(chunk, end='', flush=True)
+                fprint("\n")
 
 
 if __name__ == "__main__":
