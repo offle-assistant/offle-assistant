@@ -50,15 +50,15 @@ class Persona:
             self.message_chain.append(self.system_prompt_message)
             self.message_chain.append(user_message)
 
-            if stream is True:
-                chat_response = ollama.chat(
-                    model=self.model,
-                    messages=self.message_chain,
-                    stream=True,
-                    # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
-                    options={"temperature": self.temperature}
-                )
+            chat_response = ollama.chat(
+                model=self.model,
+                messages=self.message_chain,
+                stream=stream,
+                # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
+                options={"temperature": self.temperature}
+            )
 
+            if stream is True:
                 def response_generator():
                     response_text = ""
                     for chunk in chat_response:
@@ -74,13 +74,6 @@ class Persona:
 
                 return response_generator()
             else:
-                chat_response = ollama.chat(
-                    model=self.model,
-                    messages=self.message_chain,
-                    stream=False,
-                    # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
-                    options={"temperature": self.temperature}
-                )
                 response_text = chat_response['message']['content']
                 chat_message = {
                     "role": "assistant",
