@@ -4,7 +4,10 @@ import argparse
 from assistant.persona import get_persona_strings, Persona
 
 
-CONFIG_PATH: pathlib.Path = pathlib.Path("./tests/configs/test_config.yaml")
+# This may need to be handled more elegantly later.
+CONFIG_PATH: pathlib.Path = pathlib.Path(
+    "~/.config/offline_assistant.yaml"
+).expanduser()
 
 
 def main():
@@ -15,6 +18,7 @@ def main():
         required=True
     )
 
+    # Subcommand: persona
     parser_persona = subparsers.add_parser(
         "persona",
         help="Subcommand related to managing personas."
@@ -40,7 +44,7 @@ def main():
     args.func(args)
 
 
-def list_personas(args):
+def list_personas(args):  # This is janky, but I'll replace it later.
     persona_strings = get_persona_strings(CONFIG_PATH)
     for string in persona_strings:
         print("-----" * 15)
@@ -49,8 +53,9 @@ def list_personas(args):
 
 
 def chat(args):
+    # persona_id is often, but not necessarily, the persona's name.
     persona_id = args.persona
-    if persona_id is None:
+    if persona_id is None:  # load default persona if none is provided.
         persona: Persona = Persona(
             persona_id="default",
             config_path=CONFIG_PATH
@@ -58,7 +63,7 @@ def chat(args):
 
         persona.chat()
 
-    else:
+    else:  # Load the persona provided.
         persona: Persona = Persona(
             persona_id=persona_id,
             config_path=CONFIG_PATH
