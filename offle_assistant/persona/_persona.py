@@ -3,7 +3,7 @@ import yaml
 import pathlib
 from typing import Union, Generator
 
-from assistant.formatting import Formatting
+from offle_assistant.formatting import Formatting
 
 
 class Persona:

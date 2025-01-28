@@ -1,12 +1,12 @@
 [project]
-name = "assistant"
+name = "offle_assistant"
 version = "0.1.0"
-description = ""
+description = "A simple framework to build offline chatbots."
 authors = [
     {name = "beatoven9",email = "reeedt@gmail.com"}
 ]
 packages = [
-    {include = "assistant"}
+    {include = "offle_assistant"}
 ]
 readme = "README.md"
 requires-python = ">=3.13,<4.0"
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [tool.poetry.scripts]
-assistant = "assistant.main:main"
+offle_assistant = "offle_assistant.main:main"
 
 
 

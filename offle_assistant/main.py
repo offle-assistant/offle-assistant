@@ -5,7 +5,7 @@ from prompt_toolkit import print_formatted_text as fprint
 from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import FormattedText
 
-from assistant.persona import get_persona_strings, Persona
+from offle_assistant.persona import get_persona_strings, Persona
 
 
 # This may need to be handled more elegantly later.

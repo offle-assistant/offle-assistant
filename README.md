@@ -14,6 +14,13 @@ poetry run python assistant/main.py persona --list
 
 (COMPLETED) At some point, I need to pull apart the chat functionality from the printing. Chatting should really just take input text and return the "display name" and the output. So that the recipient can handle it and put it into whatever UI they deem fit. I need to make sure that I account for streaming with this method.
 
+(COMPLETED) Create default configuration file that can be copied to the necessary location.
+
+Create installation instructions for macOS/Linux with a script that can automate the process.
+    install ollama
+    copy config to proper location
+    poetry install
+
 ### RAG framework tested with GNU documentation
 While RAG docs should be added via a commandline tool, they should then be stored in a config file that is user-readable and user-editable.
 *  Structured Text:
