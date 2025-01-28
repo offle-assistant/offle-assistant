@@ -4,13 +4,14 @@ import argparse
 from prompt_toolkit import print_formatted_text as fprint
 from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import FormattedText
+from prompt_toolkit.validation import Validator, ValidationError
 
 from offle_assistant.persona import get_persona_strings, Persona
 
 
 # This may need to be handled more elegantly later.
 CONFIG_PATH: pathlib.Path = pathlib.Path(
-    "~/.config/offline_assistant.yaml"
+    "~/.config/offle_assistant/config.yaml"
 ).expanduser()
 
 
@@ -100,7 +101,7 @@ def chat(args):
             user_prompt = FormattedText([
                 (f"fg:{persona.formatting.user_color} bold", "User: ")
             ])
-            user_response = prompt(user_prompt)
+            user_response = prompt(user_prompt, validator=NonEmptyValidator())
 
             if user_response == "\\end":
                 break
@@ -125,6 +126,15 @@ def chat(args):
                 for chunk in persona.chat(user_response, stream=True):
                     fprint(chunk, end='', flush=True)
                 fprint("\n")
+
+
+class NonEmptyValidator(Validator):
+    def validate(self, document):
+        if not document.text.strip():  # Strip to handle spaces/newlines
+            raise ValidationError(
+                message="Please enter a message.",
+                cursor_position=0  # Highlight the error at the beginning
+            )
 
 
 if __name__ == "__main__":
