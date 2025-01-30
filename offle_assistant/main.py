@@ -69,7 +69,8 @@ def chat(args):
     if persona_id is None:  # load default persona if none is provided.
         persona: Persona = Persona(
             persona_id="default",
-            config_path=CONFIG_PATH
+            config_path=CONFIG_PATH,
+            client='http://localhost:11434'
         )
 
         while True:
@@ -93,7 +94,8 @@ def chat(args):
     else:  # Load the persona provided.
         persona: Persona = Persona(
             persona_id=persona_id,
-            config_path=CONFIG_PATH
+            config_path=CONFIG_PATH,
+            client='http://localhost:11434'
         )
 
         while True:

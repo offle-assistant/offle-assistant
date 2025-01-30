@@ -7,8 +7,20 @@ from offle_assistant.formatting import Formatting
 
 
 class Persona:
-    def __init__(self, persona_id: str, config_path: pathlib.Path):
+    def __init__(
+        self,
+        persona_id: str,
+        config_path: pathlib.Path,
+        client: str = None
+    ):
         self.persona_id = persona_id
+        # This handles providing a client (e.g. 'http://localhost:11434')
+        if client is not None:
+            self.chat_client = ollama.Client(client)
+        # This case handles communicating with ollama running as a service
+        else:
+            self.chat_client = ollama
+
         config = self.load_config(config_path)
         self.name = config["name"]
         self.model = config["model"]
@@ -50,12 +62,14 @@ class Persona:
             self.message_chain.append(self.system_prompt_message)
             self.message_chain.append(user_message)
 
-            chat_response = ollama.chat(
+            chat_response = self.chat_client.chat(
                 model=self.model,
                 messages=self.message_chain,
                 stream=stream,
                 # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
-                options={"temperature": self.temperature}
+                options={
+                    "temperature": self.temperature,
+                }
             )
 
             if stream is True:
