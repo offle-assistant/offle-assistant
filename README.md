@@ -19,10 +19,10 @@ At some point, I need to pull apart the chat functionality from the printing. Ch
 ### Create default config file (COMPLETED)
 Create default configuration file that can be copied to the necessary location.
 
-### Refactor: create cli class
+### Refactor: create cli class (COMPLETED)
 Separate CLI into its own class. __init__() will handle setting cli args, run() will handle running the program.
 
-### Server info in config file
+### Refactor: config file
 Decide whether the server info should be stored in the same config file as the personas or a different one.
 Maybe this should be a system configuration file store in /etc/offle-assistant/
 On second though, I think it should be in a few places probably. 
@@ -31,6 +31,12 @@ Check in the following order:
 * its own server block of the user config
 * individual keys on each persona
 * CLI arguments
+
+In this task, I also need to fix the janky handling of the config file. I need to create a constants.py file that has the config locations.
+I also need to figure out a better way to handle loading configs. I think that the config should be loaded earlier in the program. Probably
+best way to do this is by having a configuration class which takes the configuration as a python dictionary and creates the configuration object.
+I should also have a PersonaConfig class that holds all the necessary configuration values for the persona in a lightweight class that can
+be passed directly to the Persona constructor like persona = Persona(persona\_config).
 
 ### Simplified RAG functionality
 Create simplified RAG system. supply yaml file with a directory where the RAG docs live. If there is a RAG index file in the root of this directory,
