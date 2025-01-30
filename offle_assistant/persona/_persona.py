@@ -1,7 +1,8 @@
 import ollama
-import yaml
 import pathlib
 from typing import Union, Generator
+import yaml
+import sys
 
 from offle_assistant.formatting import Formatting
 
@@ -11,15 +12,18 @@ class Persona:
         self,
         persona_id: str,
         config_path: pathlib.Path,
-        client: str = None
+        hostname: str = 'localhost',
+        port: int = 11434
     ):
         self.persona_id = persona_id
-        # This handles providing a client (e.g. 'http://localhost:11434')
-        if client is not None:
-            self.chat_client = ollama.Client(client)
-        # This case handles communicating with ollama running as a service
-        else:
-            self.chat_client = ollama
+
+        # This handles providing a server ip/port
+        try:
+            server_url = 'http://localhost:11434'
+            self.chat_client = ollama.Client(server_url)
+        except Exception as e:
+            print(f"An exception occurred: {e}")
+            sys.exit(1)
 
         config = self.load_config(config_path)
         self.name = config["name"]

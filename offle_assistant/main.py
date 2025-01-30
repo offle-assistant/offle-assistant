@@ -38,16 +38,38 @@ def main():
     parser_chat = subparsers.add_parser(
         "chat", help="Start a chat with a specified persona"
     )
+
     parser_chat.add_argument(
-        "--persona", "-p", type=str,
+        "persona", type=str,
+        nargs="?",
+        default="default",
         help="Specify the persona name"
     )
+
     parser_chat.add_argument(
         "--no_stream",
         action="store_true",
         help="Disables text streaming. Response will print to output "
         "after the entire message has been generated."
     )
+
+    parser_chat.add_argument(
+        "--hostname", "-n",
+        type=str,
+        default="localhost",
+        help="A hostname or ip address of the server where the "
+        "ollama is running from. Default port is 11434. "
+        "This can be changed with the '--server_port' option."
+    )
+
+    parser_chat.add_argument(
+        "--port", "-p",
+        type=int,
+        default=11434,
+        help="The port number that the server is listening on."
+        "The default value is 11434."
+    )
+
     parser_chat.set_defaults(func=chat)
 
     # Parse arguments and call the appropriate function
@@ -66,68 +88,43 @@ def list_personas(args):  # This is janky, but I'll replace it later.
 def chat(args):
     # persona_id is often, but not necessarily, the persona's name.
     persona_id = args.persona
-    if persona_id is None:  # load default persona if none is provided.
-        persona: Persona = Persona(
-            persona_id="default",
-            config_path=CONFIG_PATH,
-            client='http://localhost:11434'
-        )
+    persona: Persona = Persona(
+        persona_id=persona_id,
+        config_path=CONFIG_PATH,
+        hostname=args.hostname,
+        port=args.port
+    )
 
-        while True:
+    while True:
 
-            user_prompt = FormattedText([
-                (f"fg:{persona.formatting.user_color} bold", "User: ")
-            ])
-            user_response = prompt(user_prompt)
+        user_prompt = FormattedText([
+            (f"fg:{persona.formatting.user_color} bold", "User: ")
+        ])
+        user_response = prompt(user_prompt, validator=NonEmptyValidator())
 
-            ralph_prompt = FormattedText([
-                (
-                    f"fg:{persona.formatting.persona_color} bold",
-                    f"{persona.name}: "
-                )
-            ])
+        if user_response == "\\end":
+            break
 
+        ralph_prompt = FormattedText([
+            (
+                f"fg:{persona.formatting.persona_color} bold",
+                f"{persona.name}: "
+            )
+        ])
+
+        if args.no_stream is True:
+            # Non-streamed version of response
+            fprint()
             fprint(ralph_prompt, end='', flush=True)
-            for chunk in persona.chat(user_response):
+            fprint(persona.chat(user_response, stream=False))
+            fprint()
+        else:
+            # Streamed version of response
+            fprint()
+            fprint(ralph_prompt, end='', flush=True)
+            for chunk in persona.chat(user_response, stream=True):
                 fprint(chunk, end='', flush=True)
-
-    else:  # Load the persona provided.
-        persona: Persona = Persona(
-            persona_id=persona_id,
-            config_path=CONFIG_PATH,
-            client='http://localhost:11434'
-        )
-
-        while True:
-
-            user_prompt = FormattedText([
-                (f"fg:{persona.formatting.user_color} bold", "User: ")
-            ])
-            user_response = prompt(user_prompt, validator=NonEmptyValidator())
-
-            if user_response == "\\end":
-                break
-
-            ralph_prompt = FormattedText([
-                (
-                    f"fg:{persona.formatting.persona_color} bold",
-                    f"{persona.name}: "
-                )
-            ])
-
-            if args.no_stream is True:
-                # Non-streamed version of response
-                fprint()
-                fprint(ralph_prompt, end='', flush=True)
-                fprint(persona.chat(user_response, stream=False))
-                fprint()
-            else:
-                # Streamed version of response
-                fprint()
-                fprint(ralph_prompt, end='', flush=True)
-                for chunk in persona.chat(user_response, stream=True):
-                    fprint(chunk, end='', flush=True)
-                fprint("\n")
+            fprint("\n")
 
 
 class NonEmptyValidator(Validator):
