@@ -13,15 +13,21 @@ CONFIG_PATH: pathlib.Path = pathlib.Path(
 
 class CLI:
     def __init__(self):
-        parser = argparse.ArgumentParser(description="CLI Chatbot")
-        subparsers = parser.add_subparsers(
+        self.parser = argparse.ArgumentParser(description="CLI Chatbot")
+        self.subparsers = self.parser.add_subparsers(
             title="subcommand",
             dest="subcommand",
             required=True
         )
+        self.add_persona_parser()
+        self.add_chat_parser()
 
+        # Parse arguments
+        self.args = self.parser.parse_args()
+
+    def add_persona_parser(self):
         # Subcommand: persona
-        parser_persona = subparsers.add_parser(
+        parser_persona = self.subparsers.add_parser(
             "persona",
             help="Subcommand related to managing personas."
         )
@@ -31,8 +37,9 @@ class CLI:
         )
         parser_persona.set_defaults(func=persona_command)
 
+    def add_chat_parser(self):
         # Subcommand: chat
-        parser_chat = subparsers.add_parser(
+        parser_chat = self.subparsers.add_parser(
             "chat", help="Start a chat with a specified persona"
         )
 
@@ -68,9 +75,6 @@ class CLI:
         )
 
         parser_chat.set_defaults(func=chat_command)
-
-        # Parse arguments
-        self.args = parser.parse_args()
 
     def run(self):
         # Call the appropriate function
