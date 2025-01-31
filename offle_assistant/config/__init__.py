@@ -1,5 +1,5 @@
-from ._config import load_config
+from ._config import Config
 
 __all__ = [
-    "load_config"
+    "Config"
 ]

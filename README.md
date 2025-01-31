@@ -45,6 +45,10 @@ be passed directly to the Persona constructor like persona = Persona(persona\_co
     * Create some format check for the yaml file.
     * Create Config class. This class should store personas as a list of persona dictionaries
 
+# Main goals
+    * I want the persona class to be config agnostic. I want it to just have a bunch of input parameters with default values.
+    * I want the config file to be loaded by a class so that I can handle indexing into the dictionary in one place only.
+
     
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.

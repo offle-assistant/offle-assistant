@@ -5,6 +5,25 @@ from jsonschema import validate, ValidationError
 import yaml
 
 
+class Config:
+    def __init__(self, config_path: pathlib.Path):
+        config_dict = self.load_config(config_path)
+        self.global_user_color = config_dict["global_settings"]["user_color"]
+
+    def load_config(self, config_path: pathlib.Path) -> dict:
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+
+        try:
+            validate(instance=config, schema=CONFIG_SCHEMA)
+            print("✅ Config is valid!")
+            return config
+        except ValidationError as e:
+            print(f"❌ Config validation failed: {e.message}")
+            print(f"Offending config file: {config_path}")
+            sys.exit(1)
+
+
 CONFIG_SCHEMA = {
     "type": "object",
     "properties": {
@@ -66,16 +85,3 @@ CONFIG_SCHEMA = {
     "additionalProperties": False
 }
 
-
-def load_config(config_path: pathlib.Path) -> dict:
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
-
-    try:
-        validate(instance=config, schema=CONFIG_SCHEMA)
-        print("✅ Config is valid!")
-        return config
-    except ValidationError as e:
-        print(f"❌ Config validation failed: {e.message}")
-        print(f"Offending config file: {config_path}")
-        sys.exit(1)

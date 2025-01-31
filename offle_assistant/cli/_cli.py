@@ -3,6 +3,7 @@ import pathlib
 
 from ._chat_command import chat_command
 from ._persona_command import persona_command
+from ._config_command import config_command
 
 
 # This may need to be handled more elegantly later.
@@ -21,9 +22,22 @@ class CLI:
         )
         self.add_persona_parser()
         self.add_chat_parser()
+        self.add_config_parser()
 
         # Parse arguments
         self.args = self.parser.parse_args()
+
+    def add_config_parser(self):
+        # Subcommand: persona
+        parser_config = self.subparsers.add_parser(
+            "config",
+            help="Subcommand related to managing config files."
+        )
+        parser_config.add_argument(
+            "--validate", "-v",
+            action="store_true",
+        )
+        parser_config.set_defaults(func=config_command)
 
     def add_persona_parser(self):
         # Subcommand: persona
