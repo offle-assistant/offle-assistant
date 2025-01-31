@@ -5,6 +5,8 @@ from ._chat_command import chat_command
 from ._persona_command import persona_command
 from ._config_command import config_command
 
+from offle_assistant.config import Config
+
 
 # This may need to be handled more elegantly later.
 CONFIG_PATH: pathlib.Path = pathlib.Path(
@@ -91,8 +93,10 @@ class CLI:
         parser_chat.set_defaults(func=chat_command)
 
     def run(self):
+        config = Config(CONFIG_PATH)
+
         # Call the appropriate function
         self.args.func(
             args=self.args,
-            config_path=CONFIG_PATH,
+            config=config,
         )

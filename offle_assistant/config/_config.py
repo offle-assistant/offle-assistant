@@ -59,6 +59,10 @@ class Config:
                 "formatting": {
                     "user_color": "cyan",
                     "persona_color": "pink"
+                },
+                "server": {
+                    "hostname": "localhost",
+                    "port": 11434
                 }
             }
         """
@@ -91,6 +95,18 @@ class Config:
                     "persona_color",
                     self.global_persona_color
                 )
+            )
+
+            new_persona["server"] = current_persona.get("server", {})
+            new_persona["server"]["hostname"] = (
+                new_persona["server"].get(
+                    "hostname",
+                    self.global_hostname)
+            )
+            new_persona["server"]["port"] = (
+                new_persona["server"].get(
+                    "port",
+                    self.global_port)
             )
 
             self.persona_dict[persona_id] = new_persona
