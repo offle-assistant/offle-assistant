@@ -32,11 +32,24 @@ Check in the following order:
 * individual keys on each persona
 * CLI arguments
 
+Server config should be overwritten by configs later in the chain, personas should be appended to the persona list.
+
 In this task, I also need to fix the janky handling of the config file. I need to create a constants.py file that has the config locations.
 I also need to figure out a better way to handle loading configs. I think that the config should be loaded earlier in the program. Probably
 best way to do this is by having a configuration class which takes the configuration as a python dictionary and creates the configuration object.
 I should also have a PersonaConfig class that holds all the necessary configuration values for the persona in a lightweight class that can
 be passed directly to the Persona constructor like persona = Persona(persona\_config).
+
+# Game plan for this task:
+    * Add new config file to /etc/offle-assistant/config.yaml and test loading from it.
+    * Create some format check for the yaml file.
+    * Create Config class. This class should store personas as a list of persona dictionaries
+
+    
+### Create message history
+I want at least a log of conversations per-persona. One file per conversation.
+
+
 
 ### Simplified RAG functionality
 Create simplified RAG system. supply yaml file with a directory where the RAG docs live. If there is a RAG index file in the root of this directory,

@@ -32,10 +32,7 @@ class Persona:
         self.system_prompt = f"Your name is{self.name}" \
             + config["system_prompt"]
 
-        if config["rag"]["enabled"] is True:
-            self.rag = config["rag"]["documents"]
-        else:
-            self.rag = None
+        self.rag_dir = config.get("rag_dir", None)
 
         self.formatting = Formatting(
             formatting_config=config.get("formatting", None)
@@ -57,49 +54,47 @@ class Persona:
     def chat(
         self, user_response, stream: bool = False
     ) -> Union[str, Generator[str, None, None]]:
-        while True:
+        user_message = {
+            "role": "user",
+            "content": "User: " + user_response
+        }
+        self.message_chain.append(self.system_prompt_message)
+        self.message_chain.append(user_message)
 
-            user_message = {
-                "role": "user",
-                "content": "User: " + user_response
+        chat_response = self.chat_client.chat(
+            model=self.model,
+            messages=self.message_chain,
+            stream=stream,
+            # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
+            options={
+                "temperature": self.temperature,
             }
-            self.message_chain.append(self.system_prompt_message)
-            self.message_chain.append(user_message)
+        )
 
-            chat_response = self.chat_client.chat(
-                model=self.model,
-                messages=self.message_chain,
-                stream=stream,
-                # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
-                options={
-                    "temperature": self.temperature,
-                }
-            )
+        if stream is True:
+            def response_generator():
+                response_text = ""
+                for chunk in chat_response:
+                    chunk_content = chunk['message']['content']
+                    yield chunk_content
+                    response_text += chunk_content
 
-            if stream is True:
-                def response_generator():
-                    response_text = ""
-                    for chunk in chat_response:
-                        chunk_content = chunk['message']['content']
-                        yield chunk_content
-                        response_text += chunk_content
-
-                    chat_message = {
-                        "role": "assistant",
-                        "content": response_text
-                    }
-                    self.message_chain.append(chat_message)
-
-                return response_generator()
-            else:
-                response_text = chat_response['message']['content']
                 chat_message = {
                     "role": "assistant",
                     "content": response_text
                 }
                 self.message_chain.append(chat_message)
 
-                return response_text
+            return response_generator()
+        else:
+            response_text = chat_response['message']['content']
+            chat_message = {
+                "role": "assistant",
+                "content": response_text
+            }
+            self.message_chain.append(chat_message)
+
+            return response_text
 
 
 def get_persona_strings(config_path: pathlib.Path) -> list[Persona]:
