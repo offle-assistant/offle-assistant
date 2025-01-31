@@ -1,24 +1,30 @@
-import pathlib
-
 from prompt_toolkit import print_formatted_text as fprint
 from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import Validator, ValidationError
 
 from offle_assistant.persona import Persona
+from offle_assistant.config import Config
 
 
 def chat_command(
     args,
-    config_path: pathlib.Path
+    config: Config
 ):
     # persona_id is often, but not necessarily, the persona's name.
     persona_id = args.persona
+    persona_dict = config.persona_dict
+    selected_persona = persona_dict[persona_id]
     persona: Persona = Persona(
         persona_id=persona_id,
-        config_path=config_path,
-        hostname=args.hostname,
-        port=args.port
+        name=selected_persona["name"],
+        description=selected_persona["description"],
+        system_prompt=selected_persona["system_prompt"],
+        model=selected_persona["model"],
+        user_color=selected_persona["formatting"]["user_color"],
+        persona_color=selected_persona["formatting"]["persona_color"],
+        hostname=selected_persona["server"]["hostname"],
+        port=selected_persona["server"]["port"],
     )
 
     while True:

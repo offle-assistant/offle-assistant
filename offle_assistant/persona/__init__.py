@@ -1,3 +1,5 @@
-from ._persona import get_persona_strings, Persona, Formatting
+from ._persona import Persona
 
-__all__ = ["get_persona_strings", "Persona", "Formatting"]
+__all__ = [
+    "Persona"
+]

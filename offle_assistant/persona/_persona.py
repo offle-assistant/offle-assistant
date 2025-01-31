@@ -11,31 +11,36 @@ class Persona:
     def __init__(
         self,
         persona_id: str,
-        config_path: pathlib.Path,
+        name: str,
+        description: str,
+        system_prompt: str,
+        model: str,
+        user_color: str,
+        persona_color: str,
         hostname: str = 'localhost',
         port: int = 11434
     ):
         self.persona_id = persona_id
+        self.name = name
+        self.description = description
+        self.system_prompt = f"Your name is{self.name}" + system_prompt
+        self.model = model
+        self.user_color = user_color
+        self.persona_color = persona_color
+        self.hostname = hostname
+        self.port = port
 
         # This handles providing a server ip/port
         try:
-            server_url = 'http://localhost:11434'
+            server_url = f'http://{self.hostname}:{self.port}'
             self.chat_client = ollama.Client(server_url)
         except Exception as e:
             print(f"An exception occurred: {e}")
             sys.exit(1)
 
-        config = self.load_config(config_path)
-        self.name = config["name"]
-        self.model = config["model"]
-        self.description = config["description"]
-        self.system_prompt = f"Your name is{self.name}" \
-            + config["system_prompt"]
-
-        self.rag_dir = config.get("rag_dir", None)
-
         self.formatting = Formatting(
-            formatting_config=config.get("formatting", None)
+            user_color=self.user_color,
+            persona_color=self.persona_color
         )
 
         self.system_prompt_message = {

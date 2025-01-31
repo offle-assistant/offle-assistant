@@ -72,6 +72,10 @@ class Config:
             current_persona = config_personas[persona_id]
             new_persona = {}
             new_persona["name"] = current_persona.get("name", "default")
+            new_persona["description"] = current_persona.get(
+                "description",
+                "A chat bot."
+            )
             new_persona["system_prompt"] = current_persona.get(
                 "system_prompt",
                 None
