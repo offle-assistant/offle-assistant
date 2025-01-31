@@ -4,7 +4,7 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import Validator, ValidationError
 
 from offle_assistant.persona import Persona
-from offle_assistant.config import Config
+from offle_assistant.config import Config, PersonaConfig
 
 
 def chat_command(
@@ -14,17 +14,17 @@ def chat_command(
     # persona_id is often, but not necessarily, the persona's name.
     persona_id = args.persona
     persona_dict = config.persona_dict
-    selected_persona = persona_dict[persona_id]
+    selected_persona: PersonaConfig = persona_dict[persona_id]
     persona: Persona = Persona(
         persona_id=persona_id,
-        name=selected_persona["name"],
-        description=selected_persona["description"],
-        system_prompt=selected_persona["system_prompt"],
-        model=selected_persona["model"],
-        user_color=selected_persona["formatting"]["user_color"],
-        persona_color=selected_persona["formatting"]["persona_color"],
-        hostname=selected_persona["server"]["hostname"],
-        port=selected_persona["server"]["port"],
+        name=selected_persona.name,
+        description=selected_persona.description,
+        system_prompt=selected_persona.system_prompt,
+        model=selected_persona.model,
+        user_color=selected_persona.user_color,
+        persona_color=selected_persona.persona_color,
+        hostname=selected_persona.hostname,
+        port=selected_persona.port,
     )
 
     while True:

@@ -1,5 +1,6 @@
-from ._config import Config
+from ._config import Config, PersonaConfig
 
 __all__ = [
-    "Config"
+    "Config",
+    "PersonaConfig"
 ]
