@@ -1,5 +1,7 @@
-from jsonschema import validate, ValidationError
+import pathlib
 import sys
+
+from jsonschema import validate, ValidationError
 import yaml
 
 
@@ -41,20 +43,31 @@ CONFIG_SCHEMA = {
                 }
             }
         },
-        "server": {
+        "global_settings": {
             "type": "object",
             "properties": {
-                "hostname": {"type": "string"},
-                "port": {"type": "integer"}
-            }
-        }
+                "user_color": {"type": "string"},
+                "persona_color": {"type": "string"},
+                "server": {
+                    "type": "object",
+                    "properties": {
+                        "hostname": {"type": "string"},
+                        "port": {"type": "integer"}
+                    },
+                    "required": [],
+                    "additionalProperties": False,
+                },
+            },
+            "required": [],
+            "additionalProperties": False,
+        },
     },
     "required": ["personas"],
     "additionalProperties": False
 }
 
 
-def load_config(config_path):
+def load_config(config_path: pathlib.Path) -> dict:
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -66,4 +79,3 @@ def load_config(config_path):
         print(f"❌ Config validation failed: {e.message}")
         print(f"Offending config file: {config_path}")
         sys.exit(1)
-        return None
