@@ -49,6 +49,9 @@ be passed directly to the Persona constructor like persona = Persona(persona\_co
     * I want the persona class to be config agnostic. I want it to just have a bunch of input parameters with default values.
     * I want the config file to be loaded by a class so that I can handle indexing into the dictionary in one place only.
 
+### I need to fix the formatting stuff
+Right now, I think there's still some formatting stuff tied into the individual personas and there shouldn't be.
+Maybe the formatting options for individual personas should be removed for now. Formatting stuff is only global
     
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.

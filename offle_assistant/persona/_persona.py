@@ -4,8 +4,6 @@ from typing import Union, Generator
 import yaml
 import sys
 
-from offle_assistant.formatting import Formatting
-
 
 class Persona:
     def __init__(
@@ -15,8 +13,6 @@ class Persona:
         description: str,
         system_prompt: str,
         model: str,
-        user_color: str,
-        persona_color: str,
         hostname: str = 'localhost',
         port: int = 11434
     ):
@@ -25,8 +21,6 @@ class Persona:
         self.description = description
         self.system_prompt = f"Your name is{self.name}" + system_prompt
         self.model = model
-        self.user_color = user_color
-        self.persona_color = persona_color
         self.hostname = hostname
         self.port = port
 
@@ -37,11 +31,6 @@ class Persona:
         except Exception as e:
             print(f"An exception occurred: {e}")
             sys.exit(1)
-
-        self.formatting = Formatting(
-            user_color=self.user_color,
-            persona_color=self.persona_color
-        )
 
         self.system_prompt_message = {
             "role": "system",

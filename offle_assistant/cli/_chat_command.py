@@ -21,8 +21,6 @@ def chat_command(
         description=selected_persona.description,
         system_prompt=selected_persona.system_prompt,
         model=selected_persona.model,
-        user_color=selected_persona.user_color,
-        persona_color=selected_persona.persona_color,
         hostname=selected_persona.hostname,
         port=selected_persona.port,
     )
@@ -30,7 +28,7 @@ def chat_command(
     while True:
 
         user_prompt = FormattedText([
-            (f"fg:{persona.formatting.user_color} bold", "User: ")
+            (f"fg:{config.global_user_color} bold", "User: ")
         ])
         user_response = prompt(user_prompt, validator=NonEmptyValidator())
 
@@ -39,7 +37,7 @@ def chat_command(
 
         ralph_prompt = FormattedText([
             (
-                f"fg:{persona.formatting.persona_color} bold",
+                f"fg:{config.global_persona_color} bold",
                 f"{persona.name}: "
             )
         ])

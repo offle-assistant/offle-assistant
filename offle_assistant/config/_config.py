@@ -68,19 +68,6 @@ class Config:
             )
             model = current_persona.get("model", None)
             rag_dir = current_persona.get("rag_dir", None)
-            formatting = current_persona.get("formatting", {})
-
-            user_color = (
-                formatting.get(
-                    "user_color",
-                    self.global_user_color)
-            )
-            persona_color = (
-                formatting.get(
-                    "persona_color",
-                    self.global_persona_color
-                )
-            )
 
             server = current_persona.get("server", {})
             hostname = (
@@ -101,8 +88,6 @@ class Config:
                 system_prompt=system_prompt,
                 model=model,
                 rag_dir=rag_dir,
-                user_color=user_color,
-                persona_color=persona_color,
                 hostname=hostname,
                 port=port
             )
@@ -119,8 +104,6 @@ class PersonaConfig:
         system_prompt: str,
         model: str,
         rag_dir: str,
-        user_color: str,
-        persona_color: str,
         hostname: str,
         port: int
     ):
@@ -129,8 +112,6 @@ class PersonaConfig:
         self.description = description
         self.system_prompt = system_prompt
         self.model = model
-        self.user_color = user_color
-        self.persona_color = persona_color
         self.hostname = hostname
         self.port = port
 
