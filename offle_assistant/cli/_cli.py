@@ -1,5 +1,6 @@
 import argparse
 import pathlib
+import sys
 
 from ._chat_command import chat_command
 from ._persona_command import persona_command
@@ -9,8 +10,11 @@ from offle_assistant.config import Config
 
 
 # This may need to be handled more elegantly later.
-CONFIG_PATH: pathlib.Path = pathlib.Path(
-    "~/.config/offle_assistant/config.yaml"
+SYSTEM_CONFIG: pathlib.Path = pathlib.Path(
+    "/etc/offle-assistant/config.yaml"
+)
+USER_CONFIG: pathlib.Path = pathlib.Path(
+    "~/.config/offle-assistant/config.yaml"
 ).expanduser()
 
 
@@ -93,10 +97,18 @@ class CLI:
         parser_chat.set_defaults(func=chat_command)
 
     def run(self):
-        config = Config(CONFIG_PATH)
+        if USER_CONFIG.is_file():
+            print(f"Loading config: {USER_CONFIG}")
+            self.config = Config(USER_CONFIG)
+        elif SYSTEM_CONFIG.is_file():
+            print(f"Loading config: {SYSTEM_CONFIG}")
+            self.config = Config(SYSTEM_CONFIG)
+        else:
+            print("ERROR: no valid config")
+            sys.exit(1)
 
         # Call the appropriate function
         self.args.func(
             args=self.args,
-            config=config,
+            config=self.config,
         )

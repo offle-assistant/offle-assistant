@@ -22,7 +22,7 @@ Create default configuration file that can be copied to the necessary location.
 ### Refactor: create cli class (COMPLETED)
 Separate CLI into its own class. __init__() will handle setting cli args, run() will handle running the program.
 
-### Refactor: config file
+### Refactor: config file (COMPLETED)
 Decide whether the server info should be stored in the same config file as the personas or a different one.
 Maybe this should be a system configuration file store in /etc/offle-assistant/
 On second though, I think it should be in a few places probably. 
@@ -49,14 +49,17 @@ be passed directly to the Persona constructor like persona = Persona(persona\_co
     * I want the persona class to be config agnostic. I want it to just have a bunch of input parameters with default values.
     * I want the config file to be loaded by a class so that I can handle indexing into the dictionary in one place only.
 
-### I need to fix the formatting stuff
+# Subtasks
+* format checking for yaml (COMPLETED)
+* Create Config and PersonaConfig classes (COMPLETED)
+* Add checks for system and user config files. (COMPLETED)
+
+### I need to fix the formatting stuff (COMPLETED)
 Right now, I think there's still some formatting stuff tied into the individual personas and there shouldn't be.
 Maybe the formatting options for individual personas should be removed for now. Formatting stuff is only global
     
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.
-
-
 
 ### Simplified RAG functionality
 Create simplified RAG system. supply yaml file with a directory where the RAG docs live. If there is a RAG index file in the root of this directory,
