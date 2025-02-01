@@ -1,4 +1,5 @@
 import pathlib
+from typing import Optional
 import sys
 
 from jsonschema import validate, ValidationError
@@ -103,17 +104,20 @@ class PersonaConfig:
         description: str,
         system_prompt: str,
         model: str,
-        rag_dir: str,
+        rag_dir: Optional[str],
         hostname: str,
         port: int
     ):
-        self.persona_id = persona_id
-        self.name = name
-        self.description = description
-        self.system_prompt = system_prompt
-        self.model = model
-        self.hostname = hostname
-        self.port = port
+        self.persona_id: str = persona_id
+        self.name: str = name
+        self.description: str = description
+        self.rag_dir: Optional[pathlib.Path] = pathlib.Path(
+            rag_dir
+        ).expanduser() if rag_dir is not None else None
+        self.system_prompt: str = system_prompt
+        self.model: str = model
+        self.hostname: str = hostname
+        self.port: int = port
 
 
 def load_config(config_path: pathlib.Path) -> dict:

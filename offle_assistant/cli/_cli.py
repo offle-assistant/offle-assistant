@@ -5,6 +5,7 @@ import sys
 from ._chat_command import chat_command
 from ._persona_command import persona_command
 from ._config_command import config_command
+from ._rag_command import rag_command
 
 from offle_assistant.config import Config
 
@@ -29,6 +30,7 @@ class CLI:
         self.add_persona_parser()
         self.add_chat_parser()
         self.add_config_parser()
+        self.add_rag_parser()
 
         # Parse arguments
         self.args = self.parser.parse_args()
@@ -44,6 +46,27 @@ class CLI:
             action="store_true",
         )
         parser_config.set_defaults(func=config_command)
+
+    def add_rag_parser(self):
+        # Subcommand: persona
+        parser_rag = self.subparsers.add_parser(
+            "rag",
+            help="Subcommand related to managing RAG documents."
+        )
+
+        parser_rag.add_argument(
+            "persona", type=str,
+            nargs="?",
+            default=None,
+            help="Specify the persona name"
+        )
+
+        parser_rag.add_argument(
+            "--index", "-i",
+            action="store_true",
+        )
+
+        parser_rag.set_defaults(func=rag_command)
 
     def add_persona_parser(self):
         # Subcommand: persona

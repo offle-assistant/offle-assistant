@@ -57,9 +57,6 @@ be passed directly to the Persona constructor like persona = Persona(persona\_co
 ### I need to fix the formatting stuff (COMPLETED)
 Right now, I think there's still some formatting stuff tied into the individual personas and there shouldn't be.
 Maybe the formatting options for individual personas should be removed for now. Formatting stuff is only global
-    
-### Create message history
-I want at least a log of conversations per-persona. One file per conversation.
 
 ### Simplified RAG functionality
 Create simplified RAG system. supply yaml file with a directory where the RAG docs live. If there is a RAG index file in the root of this directory,
@@ -71,6 +68,26 @@ only that persona.
 Indices should be per-sentence in each document. A hit will return the entire document.
 This has obvious limitations. If a document is very long, it will fill up the entire context window.
 For this method, documents will need to have a length maximum.
+
+# Subtasks
+* Create directory in ~/.config/offle-assistant/rag/ralph/ which will house the docs.
+* Update the config file accordingly
+* Populate the directory with PDF files in the ./src/
+* Create subcommand which indexes all the documents
+    * Takes everyting from the src dir and converts them into parseable formats with pymupdf4llm
+    * Sentence-level or paragraph-level vector embeddings
+    * Stored in a dictionary so that you can look up the source of each embedding
+* Create function that performs the same embedding process on a query sentence.
+* Create function which searches all the embeddings and compares vectors for cosine similarities selecting the closest.
+* Create new Persona.chat\_w\_rag(user\_query) which performs chat but with the context prepended to the query.
+    * I also want this to provide the excerpt that was the hit to the user and tell the user explicitly where it got it from.
+    * It must include path to the file and line number.
+* Create a catch in the cli which intercepts messages including something like "Search Database for: " and calls the new Persona.chat\_w\_rag method
+* Add a test to make sure it's working. One possible automated test would be to check a query that exactly matches a line in the corpus.
+* Create --add option to the rag subcommand that gives you the ability to add documents to the rag dir.
+
+### Create message history
+I want at least a log of conversations per-persona. One file per conversation.
 
 ### Installation instructions
 Create installation instructions for macOS/Linux with a script that can automate the process.
