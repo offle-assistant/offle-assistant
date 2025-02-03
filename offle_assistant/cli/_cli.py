@@ -62,7 +62,13 @@ class CLI:
         )
 
         parser_rag.add_argument(
-            "--index", "-i",
+            "--add", "-a",
+            type=str,
+            help="A file or directory to add to the RAG database."
+        )
+
+        parser_rag.add_argument(
+            "--list", "-l",
             action="store_true",
         )
 

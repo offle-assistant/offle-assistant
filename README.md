@@ -70,21 +70,68 @@ This has obvious limitations. If a document is very long, it will fill up the en
 For this method, documents will need to have a length maximum.
 
 # Subtasks
-* Create directory in ~/.config/offle-assistant/rag/ralph/ which will house the docs.
-* Update the config file accordingly
-* Populate the directory with PDF files in the ./src/
-* Create subcommand which indexes all the documents
-    * Takes everyting from the src dir and converts them into parseable formats with pymupdf4llm
+* Create directory in ~/.config/offle-assistant/rag/ralph/ which will house the docs. (COMPLETED)
+* Update the config file accordingly (COMPLETED)
+* Populate the directory with PDF files in the ./src/ (COMPLETED)
+* Choose a vector database provider: (COMPLETE)
+    * We can actually support multiple.
+    * For now, lets go with qdrant
+* Set up the database
+    This is as simple as running a docker container. I should make sure to set it up with docker-compose for maintainability.
+* Create subcommand which indexes all the documents and stores the vectors in the database
+    * Takes everything from the src dir and converts them into parseable formats with pymupdf4llm
     * Sentence-level or paragraph-level vector embeddings
-    * Stored in a dictionary so that you can look up the source of each embedding
+    * Store them in the database
+        This will require payloads.
+        {
+            "doc\_id": "12i1qrf8",  # This is a hash of the document. Guarantees uniqueness and will change if the doc changes.
+            "file\_name: "scientific\_paper.pdf",
+            "chunk\_idx": 4,  # useful when I want to provide text from around the hit. "select embedded\_text where doc\_id is 12i1qrf8 and chunk\_idx is 3"
+            "file\_path": "path/to/file/scientific\_paper.pdf",  # path may change. Further case for add/delete documents tools in the cli tool
+            "embedded\_text": "This is very important information that you just queried for.",
+            "subset\_id": "ralph",  # For now, this will be set by the bot. But user's should be able to select a list of subsets they'd like to query.
+        }
+    * I need a single function which takes a PDF and then:
+        * Creates a hash of the PDF (COMPLETED)
+        * Checks to see if the hash (doc\_id) exists in the database. (COMPLETED)
+        If it does
+        * return
+        If it doesn't
+        * Converts it into markdown (COMPLETED)
+        * Chunks it into separate paragraphs (COMPLETED)
+        * Performs embeddings on each paragraph making sure to take note of the index of each chunk  (COMPLETED)
+            this will be its own function so I can try to parallelize here but also so i can plug in different vectorizers trivially.
+            use sentence-transformers. Where is the model stored locally?
+        * returns a list of entries to the Qdrant database. (a dictionary with a vector and a payload) (COMPLETED)
+    * Current issues:
+        Right now, I don't have a great way to handle different models
+
 * Create function that performs the same embedding process on a query sentence.
-* Create function which searches all the embeddings and compares vectors for cosine similarities selecting the closest.
+* Create function which queries the database.
 * Create new Persona.chat\_w\_rag(user\_query) which performs chat but with the context prepended to the query.
     * I also want this to provide the excerpt that was the hit to the user and tell the user explicitly where it got it from.
     * It must include path to the file and line number.
 * Create a catch in the cli which intercepts messages including something like "Search Database for: " and calls the new Persona.chat\_w\_rag method
 * Add a test to make sure it's working. One possible automated test would be to check a query that exactly matches a line in the corpus.
 * Create --add option to the rag subcommand that gives you the ability to add documents to the rag dir.
+
+### Refactor QdrantServer
+* This needs to be a child class of a more general VectorDatabase class.
+* This needs to be able to connect to the server, add new collections, somehow manage which vectorizer is used for each
+collection. I think this task and the Vectorizer refactor need to happen in tandem.
+* A TEMPORARY SOLUTION: in the metadata for a collection, I store a "vectorizer\_string". In the Vectorizer module,
+there will be a dictionary with a translator that takes a key and outputs the Vectorizer object. This grants us
+the ability to load the correct Vectorizer when we open an existing database. 
+* Part of this refactor, I need to change how this class deals with collections. This class should be able to manage multiple collections at the same time.
+This means that it should be able to create new collections, add docs to specific collections, delete collections, etc.
+This allows us to provide collection names, model names, and Vectorizers only when we're creating new collections.
+When we are querying existing collections or adding documents to existing collections, all we need is the collection name and the rest will be taken care of
+automatically.
+
+### Refactor Vectorizer
+Right now the embeddings are just done with a bunch of loose functions. This should really be a Vectorizer parent class with a SentenceTransformerVectorizer subclass.
+the SentenceTransformerVectorizer constructor will take the model name as a parameter.
+This way, I'll be able to share one interface for all vectorizers.
 
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.
@@ -105,9 +152,6 @@ Things that might work well:
 
 ### Ollama modelfile support
 Think about the ability to use ollama native modelfiles with the config. In the very least, we should be able to translate a modelfile into a config entry.
-
-### PDF support
-To start, I'm going to have RAG just handle text documents, but this should be able to support PDFs in the future.
 
 ### RAG framework tested with GNU documentation
 While RAG docs should be added via a commandline tool, they should then be stored in a config file that is user-readable and user-editable.
