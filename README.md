@@ -133,6 +133,9 @@ Right now the embeddings are just done with a bunch of loose functions. This sho
 the SentenceTransformerVectorizer constructor will take the model name as a parameter.
 This way, I'll be able to share one interface for all vectorizers.
 
+### Refactor Create parent classes, interfaces, for Vectorizer and VectorDB (Vectorizer Completed)
+I need to make the interfaces for QdrantDB and Vectorizer so that we can trivially add new Vectorizers and Vector Databases
+
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.
 

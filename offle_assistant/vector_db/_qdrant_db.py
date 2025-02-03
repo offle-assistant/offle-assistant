@@ -1,6 +1,6 @@
 import hashlib
 import pathlib
-from typing import Optional
+from typing import Optional, Type
 
 import numpy as np
 from qdrant_client import QdrantClient
@@ -8,8 +8,9 @@ from qdrant_client.models import Distance, VectorParams, PointStruct
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 from offle_assistant.vectorizer import (
+    Vectorizer,
     SentenceTransformerVectorizer,
-    vectorizer_table
+    vectorizer_lookup_table
 )
 
 
@@ -25,14 +26,14 @@ class QdrantDB:
     def add_collection(
         self,
         collection_name: str,
-        vectorizer_class=SentenceTransformerVectorizer,
+        vectorizer_class: Type[Vectorizer] = SentenceTransformerVectorizer,
         model_string: Optional[str] = None
     ):
         existing_collections = self.client.get_collections().collections
         if collection_name not in [
             col.name for col in existing_collections
         ]:
-            vectorizer = (
+            vectorizer: Vectorizer = (
                 vectorizer_class() if model_string is None else
                 vectorizer_class(model_string=model_string)
             )
@@ -112,7 +113,9 @@ class QdrantDB:
             )
             if result:
                 metadata = result[0].payload
-                vectorizer_class = vectorizer_table[metadata["vectorizer"]]
+                vectorizer_class: Type[Vectorizer] = vectorizer_lookup_table[
+                    metadata["vectorizer"]
+                ]
                 vectorizer = vectorizer_class(model_string=metadata["model"])
                 next_id: int = self.get_db_count(
                     collection_name=collection_name
