@@ -169,8 +169,8 @@ into a structure/format that offle-assistant can parse easily.
     * Huge block of text
     * This should use windows.
     * User can specify window size
-        * # of paragraphs
-        * # of sentences
+        * \# of paragraphs
+        * \# of sentences
 * Semi-Structured text
     * Novel with chapters
     * collection of news articles

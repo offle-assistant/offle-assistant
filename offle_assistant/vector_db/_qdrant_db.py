@@ -1,6 +1,7 @@
 import hashlib
 import pathlib
 from typing import Optional, Type
+import sys
 
 import numpy as np
 from qdrant_client import QdrantClient
@@ -12,9 +13,10 @@ from offle_assistant.vectorizer import (
     SentenceTransformerVectorizer,
     vectorizer_lookup_table
 )
+from ._vector_db import VectorDB
 
 
-class QdrantDB:
+class QdrantDB(VectorDB):
     def __init__(
         self,
         host: str = "localhost",
@@ -47,6 +49,7 @@ class QdrantDB:
                 sentence=size_test
             )
 
+            # Diff embeddings have diff dims.
             vector_dim: int = vectorized_sentence.shape[0]
 
             self.client.recreate_collection(
@@ -76,14 +79,20 @@ class QdrantDB:
 
     def remove_collection(
         self,
-        collection_name
+        collection_name: str
     ):
+        """
+        This removes a collection entirely.
+        """
         self.client.delete_collection(collection_name=collection_name)
 
     def clear_collection(
         self,
         collection_name: str
     ):
+        """
+        This removes all entries from a collection.
+        """
         self.remove_collection(collection_name=collection_name)
 
     def add_document(
@@ -95,48 +104,40 @@ class QdrantDB:
         doc_hash: str = self.compute_doc_hash(doc_path)  # hash of doc content
 
         print(
-            f"checking if document, {doc_path.name} is in database."
+            f"\nChecking if document, {doc_path.name} is in database."
         )
-        if self.is_doc_in_db(
-            doc_hash=doc_hash,
+
+        doc_path: pathlib.Path = self.search_collection_by_doc_id(
+            doc_id=doc_hash,
             collection_name=collection_name
-        ):  # Is document already in db.
+        )
+        if doc_path:  # Is document already in db.
             print(
-                f"Skipping document... {doc_path.name} "
-                "already exists in database."
+                f"\tSkipping document... {doc_path.name} "
+                "already exists in database.\n"
+                f"\tSource file located at: {doc_path}\n"
             )
         else:  # if not, add it
-            print("Adding doc to db.")
-            result = self.client.retrieve(
-                collection_name=collection_name,
-                ids=[0]
+            vectorizer: Vectorizer = self.get_collection_vectorizer(
+                collection_name=collection_name
             )
-            if result:
-                metadata = result[0].payload
-                vectorizer_class: Type[Vectorizer] = vectorizer_lookup_table[
-                    metadata["vectorizer"]
-                ]
-                vectorizer = vectorizer_class(model_string=metadata["model"])
-                next_id: int = self.get_db_count(
-                    collection_name=collection_name
-                )  # figure out next idx
-                points: list[PointStruct] = self.get_document_points(
-                    doc_id=doc_hash,
-                    doc_path=doc_path,
-                    next_id=next_id,
-                    subset_id="all",
-                    vectorizer=vectorizer
-                )
-                self.client.upsert(
-                    collection_name=collection_name,
-                    points=points,
-                )
 
-            else:
-                print(
-                    "database has no metadata. "
-                    "Can't tell which Vectorizer to use."
-                )
+            next_id: int = self.get_entry_count(
+                collection_name=collection_name
+            )  # figure out next idx in collection
+
+            points: list[PointStruct] = self.get_document_points(
+                doc_id=doc_hash,
+                doc_path=doc_path,
+                next_id=next_id,
+                subset_id="all",
+                vectorizer=vectorizer
+            )
+
+            self.client.upsert(
+                collection_name=collection_name,
+                points=points,
+            )
 
     def get_document_points(
         self,
@@ -169,44 +170,89 @@ class QdrantDB:
 
         return points
 
-    def is_doc_in_db(
+    def search_collection_by_doc_id(
         self,
-        doc_hash: str,
+        doc_id: str,
         collection_name: str
-    ) -> bool:
+    ) -> Optional[pathlib.Path]:
         """
-        This function takes a doc_id and checks if any other documents in the
+        This function takes a doc_hash and checks if any other documents in the
         collection have the same doc_id.
-        """
-        count_result = self.client.count(
-            collection_name=collection_name,
-            count_filter=Filter(
-                must=[
-                    FieldCondition(
-                        key="doc_id", match=MatchValue(
-                            value=doc_hash
-                        )
-                    )
-                ]
-            ),
-        )
-        if count_result.count > 0:
-            return True
-        else:
-            return False
 
-    def get_db_count(self, collection_name):
+        It would be nice to have this function return the path to the file if
+        it returns True.
+
+            def search_collection(doc_id: str) -> Optional[pathlib.Path]:
+                if hit:
+                    return hit.path
+                else:
+                    return None
+
+        """
+        filter_condition = Filter(
+            must=[
+                FieldCondition(
+                    key="doc_id",                 # Payload key
+                    match=MatchValue(value=doc_id)  # The value to match
+                )
+            ]
+        )
+        points, _ = self.client.scroll(
+            collection_name=collection_name,
+            scroll_filter=filter_condition
+        )
+        if points:
+            doc_path: pathlib.Path = pathlib.Path(
+                points[0].payload["doc_path"]
+            )
+            return doc_path
+        else:
+            return None
+
+    def get_entry_count(self, collection_name):
         return self.client.count(collection_name=collection_name).count
+
+    def get_collection_vectorizer(
+        self,
+        collection_name: str
+    ) -> Vectorizer:
+        try:
+            result = self.client.retrieve(
+                collection_name=collection_name,
+                ids=[0]
+            )
+            if result:
+                metadata = result[0].payload
+                vectorizer_class: Type[Vectorizer] = vectorizer_lookup_table[
+                    metadata["vectorizer"]
+                ]
+                vectorizer = vectorizer_class(model_string=metadata["model"])
+                return vectorizer
+            else:
+                print(
+                    "Cannot determine Vectorizer to use for embeddings. "
+                    "No metadata entry in database."
+                )
+                sys.exit(1)
+
+        except Exception as e:
+            print(f"Exception encountered: {e}")
+            sys.exit(1)
 
     def compute_doc_hash(self, file_path: pathlib.Path) -> str:
         """Compute a SHA-256 hash of the entire file contents."""
-        sha = hashlib.sha256()
-        with open(file_path, 'rb') as f:
-            chunk_size: int = 65536  # 64KB chunks
-            # Read in chunks. handles large files without using too much memory
-            while True:
-                data = f.read(chunk_size)
-                if not data:
-                    break
-                sha.update(data)
-        return sha.hexdigest()
+
+        try:
+            sha = hashlib.sha256()
+            with open(file_path, 'rb') as f:
+                chunk_size: int = 65536  # 64KB chunks
+                # Read in chunks, handles large files w/out using too much mem
+                while True:
+                    data = f.read(chunk_size)
+                    if not data:
+                        break
+                    sha.update(data)
+            return sha.hexdigest()
+        except Exception as e:
+            print(f"Exception encountered: {e}")
+            sys.exit(1)

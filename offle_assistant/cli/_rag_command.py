@@ -23,7 +23,7 @@ def rag_command(
 
         print(
             "client has: "
-            f"{qdrant_db.get_db_count(collection_name=collection_name)}"
+            f"{qdrant_db.get_entry_count(collection_name=collection_name)}"
             " entries."
         )
 
