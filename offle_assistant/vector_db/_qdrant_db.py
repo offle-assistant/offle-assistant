@@ -6,10 +6,14 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
-from ._rag import chunk_and_embed, compute_doc_hash, embed_sentence
+from offle_assistant.rag import (
+    chunk_and_embed,
+    compute_doc_hash,
+    embed_sentence
+)
 
 
-class QdrantServer:
+class QdrantDB:
     def __init__(
         self,
         collection_name,
@@ -177,3 +181,4 @@ class QdrantServer:
 
     def get_db_count(self):
         return self.client.count(collection_name=self.collection_name).count
+

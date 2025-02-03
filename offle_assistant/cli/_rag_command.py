@@ -3,7 +3,7 @@ import pathlib
 from prompt_toolkit import print_formatted_text as fprint
 
 from offle_assistant.config import Config, PersonaConfig
-from offle_assistant.rag import QdrantServer
+from offle_assistant.vector_db import QdrantDB
 
 
 def rag_command(
@@ -12,14 +12,14 @@ def rag_command(
 ):
     if args.add is not None:
         doc_path: pathlib.Path = pathlib.Path(args.add).expanduser()
-        qdrant_server = QdrantServer(
+        qdrant_db = QdrantDB(
             collection_name="new_db",
         )
         # qdrant_server.clear_db()
-        qdrant_server.add_document(doc_path)
+        qdrant_db.add_document(doc_path)
 
         print(
-            f"client has: {qdrant_server.get_db_count()} entries."
+            f"client has: {qdrant_db.get_db_count()} entries."
         )
 
     # rag_dir_list = []
