@@ -12,14 +12,19 @@ def rag_command(
 ):
     if args.add is not None:
         doc_path: pathlib.Path = pathlib.Path(args.add).expanduser()
-        qdrant_db = QdrantDB(
-            collection_name="new_db",
-        )
+        qdrant_db = QdrantDB()
         # qdrant_server.clear_db()
-        qdrant_db.add_document(doc_path)
+        collection_name = "new_db"
+        qdrant_db.add_collection(collection_name=collection_name)
+        qdrant_db.add_document(
+            doc_path=doc_path,
+            collection_name=collection_name
+        )
 
         print(
-            f"client has: {qdrant_db.get_db_count()} entries."
+            "client has: "
+            f"{qdrant_db.get_db_count(collection_name=collection_name)}"
+            " entries."
         )
 
     # rag_dir_list = []

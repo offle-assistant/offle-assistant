@@ -115,7 +115,7 @@ For this method, documents will need to have a length maximum.
 * Add a test to make sure it's working. One possible automated test would be to check a query that exactly matches a line in the corpus.
 * Create --add option to the rag subcommand that gives you the ability to add documents to the rag dir.
 
-### Refactor QdrantServer
+### Refactor QdrantServer (COMPLETED)
 * This needs to be a child class of a more general VectorDatabase class.
 * This needs to be able to connect to the server, add new collections, somehow manage which vectorizer is used for each
 collection. I think this task and the Vectorizer refactor need to happen in tandem.
@@ -128,7 +128,7 @@ This allows us to provide collection names, model names, and Vectorizers only wh
 When we are querying existing collections or adding documents to existing collections, all we need is the collection name and the rest will be taken care of
 automatically.
 
-### Refactor Vectorizer
+### Refactor Vectorizer (COMPLETED)
 Right now the embeddings are just done with a bunch of loose functions. This should really be a Vectorizer parent class with a SentenceTransformerVectorizer subclass.
 the SentenceTransformerVectorizer constructor will take the model name as a parameter.
 This way, I'll be able to share one interface for all vectorizers.
