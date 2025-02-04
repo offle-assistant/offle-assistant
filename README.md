@@ -153,11 +153,8 @@ This way, I'll be able to share one interface for all vectorizers.
 I need to make the interfaces for QdrantDB and Vectorizer so that we can trivially add new Vectorizers and Vector Databases
 
 
-### RAG Improvements.
+### RAG Improvements 1 (COMPLETED)
 RAG query hits should have an object. This should allow us to provide the filename and the filepath at least.
-We may actually be able to get the page number somehow and store it in the payload. But we'd have to get fancy
-with how we are parsing the PDF. the pdf library I'm using might allow us to break it into chunks, one chunk per page
-and then as we put each page into the db, we can store the page number in the payload.
 
 We should also have a verbose flag, a few levels of it. So that people can see the documents that get returned. This
 print out should also include how close to the hit the original sentence was.
@@ -165,6 +162,15 @@ print out should also include how close to the hit the original sentence was.
 Whether we're streaming or not streaming, I think the return value of the Persona.chat() method needs to be some sort of
 object, not a bare iterator. (Side note, I think I have the type hints wrong, I have the Chat.response for streaming
 marked as a generator instead of an iterator.)
+
+### RAG Improvements 2
+Retrieval object should also provide a distance property.
+
+Clean up PDF parsing into Markdown. Maybe this happens in the markdown step?
+
+Create smarter chunking algorithm maybe chunking with minimum token counts.
+
+Create RAG options dict/struct so that we can set things like threshold, num of chunks, etc
 
 ### Switch out jsonSchema for Pydantic
     Pydantic is just way more legible
