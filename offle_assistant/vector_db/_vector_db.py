@@ -7,6 +7,29 @@ import numpy as np
 from offle_assistant.vectorizer import Vectorizer
 
 
+class DbReturnObj:
+    def __init__(
+        self,
+        file_name: str,
+        doc_path: pathlib.Path,
+        document_string: str,
+    ):
+        self.file_name = file_name
+        self.doc_path = doc_path
+        self.document_string = document_string
+
+    def get_prompt_string(self) -> str:
+        rag_prompt = ""
+
+        rag_prompt += (
+            "Given the following context, answer the user's query:\n\n"
+        )
+        rag_prompt += (
+            f"Context: {self.document_string}"
+        )
+        return rag_prompt
+
+
 class VectorDB(ABC):
     @abstractmethod
     def add_collection(

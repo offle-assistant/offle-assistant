@@ -22,7 +22,7 @@ from offle_assistant.vectorizer import (
     SentenceTransformerVectorizer,
     vectorizer_lookup_table
 )
-from ._vector_db import VectorDB
+from ._vector_db import VectorDB, DbReturnObj
 
 
 class QdrantDB(VectorDB):
@@ -90,16 +90,29 @@ class QdrantDB(VectorDB):
         self,
         collection_name: str,
         query_vector: np.array,
-    ) -> List[PointStruct]:
+    ) -> Optional[DbReturnObj]:
         search_params = SearchParams(hnsw_ef=512)
         search_results = self.client.search(
             collection_name=collection_name,
             query_vector=query_vector,
             limit=1,
-            search_params=search_params
+            search_params=search_params,
+            # score_threshold=.8  # only obtain results better than this
         )
 
-        return search_results
+        hit: PointStruct = search_results[0]
+
+        file_name: pathlib.Path = hit.payload["file_name"]
+        doc_path: pathlib.Path = hit.payload["doc_path"]
+        hit_text: str = hit.payload["embedded_text"]
+
+        db_return_obj: DbReturnObj = DbReturnObj(
+            file_name=file_name,
+            doc_path=doc_path,
+            document_string=hit_text
+        )
+
+        return db_return_obj
 
     def delete_collection(
         self,

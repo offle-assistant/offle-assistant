@@ -58,7 +58,7 @@ be passed directly to the Persona constructor like persona = Persona(persona\_co
 Right now, I think there's still some formatting stuff tied into the individual personas and there shouldn't be.
 Maybe the formatting options for individual personas should be removed for now. Formatting stuff is only global
 
-### Simplified RAG functionality
+### Simplified RAG functionality (COMPLETED)
 Create simplified RAG system. supply yaml file with a directory where the RAG docs live. If there is a RAG index file in the root of this directory,
 then use this for RAG. If there isn't, create the index. For the time being, each document gets its own vector representation and a hit will return
 the whole document. This will be well suited for reading papers. This should include another subcommand called "rag" which has --generate and --list
@@ -131,10 +131,6 @@ For this method, documents will need to have a length maximum.
 * Add a test to make sure it's working. One possible automated test would be to check a query that exactly matches a line in the corpus.
 * Create --add option to the rag subcommand that gives you the ability to add documents to the rag dir.
 
-
-### Switch out jsonSchema for Pydantic
-    Pydantic is just way more legible
-
 ### Refactor QdrantServer (COMPLETED)
 * This needs to be a child class of a more general VectorDatabase class.
 * This needs to be able to connect to the server, add new collections, somehow manage which vectorizer is used for each
@@ -153,8 +149,25 @@ Right now the embeddings are just done with a bunch of loose functions. This sho
 the SentenceTransformerVectorizer constructor will take the model name as a parameter.
 This way, I'll be able to share one interface for all vectorizers.
 
-### Refactor Create parent classes, interfaces, for Vectorizer and VectorDB (Vectorizer Completed)
+### Refactor Create parent classes, interfaces, for Vectorizer and VectorDB (Completed)
 I need to make the interfaces for QdrantDB and Vectorizer so that we can trivially add new Vectorizers and Vector Databases
+
+
+### RAG Improvements.
+RAG query hits should have an object. This should allow us to provide the filename and the filepath at least.
+We may actually be able to get the page number somehow and store it in the payload. But we'd have to get fancy
+with how we are parsing the PDF. the pdf library I'm using might allow us to break it into chunks, one chunk per page
+and then as we put each page into the db, we can store the page number in the payload.
+
+We should also have a verbose flag, a few levels of it. So that people can see the documents that get returned. This
+print out should also include how close to the hit the original sentence was.
+
+Whether we're streaming or not streaming, I think the return value of the Persona.chat() method needs to be some sort of
+object, not a bare iterator. (Side note, I think I have the type hints wrong, I have the Chat.response for streaming
+marked as a generator instead of an iterator.)
+
+### Switch out jsonSchema for Pydantic
+    Pydantic is just way more legible
 
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.
