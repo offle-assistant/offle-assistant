@@ -1,4 +1,5 @@
 import pathlib
+from typing import Optional, List
 import sys
 
 from jsonschema import validate, ValidationError
@@ -30,15 +31,29 @@ class Config:
         )
 
         # Populate server dict from Global settings
-        global_server_dict = global_settings_dict.get(
-            "server",
+        global_llm_server_dict = global_settings_dict.get(
+            "llm_server",
             {}
         )
-        self.global_hostname = global_server_dict.get(
+        self.llm_server_hostname = global_llm_server_dict.get(
             "hostname",
             "localhost"
         )
-        self.global_port = global_server_dict.get(
+        self.llm_server_port = global_llm_server_dict.get(
+            "port",
+            11434
+        )
+
+        # Populate server dict from Global settings
+        global_document_server_dict = global_settings_dict.get(
+            "document_server",
+            {}
+        )
+        self.document_server_hostname = global_document_server_dict.get(
+            "hostname",
+            "localhost"
+        )
+        self.document_server_port = global_document_server_dict.get(
             "port",
             11434
         )
@@ -67,18 +82,18 @@ class Config:
                 None
             )
             model = current_persona.get("model", None)
-            rag_dir = current_persona.get("rag_dir", None)
+            db_collections = current_persona.get("db_collections", None)
 
             server = current_persona.get("server", {})
-            hostname = (
+            llm_server_hostname = (
                 server.get(
                     "hostname",
-                    self.global_hostname)
+                    self.llm_server_hostname)
             )
-            port = (
+            llm_server_port = (
                 server.get(
                     "port",
-                    self.global_port)
+                    self.llm_server_port)
             )
 
             persona_config = PersonaConfig(
@@ -87,9 +102,9 @@ class Config:
                 description=description,
                 system_prompt=system_prompt,
                 model=model,
-                rag_dir=rag_dir,
-                hostname=hostname,
-                port=port
+                db_collections=db_collections,
+                llm_server_hostname=llm_server_hostname,
+                llm_server_port=llm_server_port
             )
 
             self.persona_dict[persona_id] = persona_config
@@ -103,17 +118,19 @@ class PersonaConfig:
         description: str,
         system_prompt: str,
         model: str,
-        rag_dir: str,
-        hostname: str,
-        port: int
+        db_collections: List[str],
+        llm_server_hostname: str,
+        llm_server_port: int
     ):
-        self.persona_id = persona_id
-        self.name = name
-        self.description = description
-        self.system_prompt = system_prompt
-        self.model = model
-        self.hostname = hostname
-        self.port = port
+        self.persona_id: str = persona_id
+        self.name: str = name
+        self.description: str = description
+        self.db_collections: List[str] = db_collections
+        self.collections: List[str] = db_collections
+        self.system_prompt: str = system_prompt
+        self.model: str = model
+        self.llm_server_hostname: str = llm_server_hostname
+        self.llm_server_port: int = llm_server_port
 
 
 def load_config(config_path: pathlib.Path) -> dict:
@@ -175,7 +192,12 @@ CONFIG_SCHEMA = {
                         "max_tokens": {"type": "integer"},
                         "hostname": {"type": "string"},
                         "port": {"type": "integer"},
-                        "rag_dir": {"type": "string"},
+                        "db_collections": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
                         "formatting": {
                             "type": "object",
                             "properties": {
@@ -201,7 +223,16 @@ CONFIG_SCHEMA = {
             "properties": {
                 "user_color": {"type": "string"},
                 "persona_color": {"type": "string"},
-                "server": {
+                "llm_server": {
+                    "type": "object",
+                    "properties": {
+                        "hostname": {"type": "string"},
+                        "port": {"type": "integer"}
+                    },
+                    "required": [],
+                    "additionalProperties": False,
+                },
+                "document_server": {
                     "type": "object",
                     "properties": {
                         "hostname": {"type": "string"},

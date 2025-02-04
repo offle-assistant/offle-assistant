@@ -5,6 +5,7 @@ import sys
 from ._chat_command import chat_command
 from ._persona_command import persona_command
 from ._config_command import config_command
+from ._rag_command import rag_command
 
 from offle_assistant.config import Config
 
@@ -29,6 +30,7 @@ class CLI:
         self.add_persona_parser()
         self.add_chat_parser()
         self.add_config_parser()
+        self.add_rag_parser()
 
         # Parse arguments
         self.args = self.parser.parse_args()
@@ -44,6 +46,38 @@ class CLI:
             action="store_true",
         )
         parser_config.set_defaults(func=config_command)
+
+    def add_rag_parser(self):
+        # Subcommand: persona
+        parser_rag = self.subparsers.add_parser(
+            "rag",
+            help="Subcommand related to managing RAG documents."
+        )
+
+        parser_rag.add_argument(
+            "--add", "-a",
+            type=str,
+            help="A file or directory to add to the RAG database."
+        )
+
+        parser_rag.add_argument(
+            "--collection", "-c",
+            type=str,
+            required=True,
+            help="Which collection to operate over."
+        )
+
+        parser_rag.add_argument(
+            "--list", "-l",
+            action="store_true",
+        )
+
+        parser_rag.add_argument(
+            "--delete", "-d",
+            action="store_true",
+        )
+
+        parser_rag.set_defaults(func=rag_command)
 
     def add_persona_parser(self):
         # Subcommand: persona
@@ -75,6 +109,12 @@ class CLI:
             action="store_true",
             help="Disables text streaming. Response will print to output "
             "after the entire message has been generated."
+        )
+
+        parser_chat.add_argument(
+            "--rag", "-r",
+            action="store_true",
+            help="Enables RAG "
         )
 
         parser_chat.add_argument(
