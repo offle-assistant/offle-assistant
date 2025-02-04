@@ -69,13 +69,16 @@ class Persona:
                 self.db_collections[0]
             )
             query_vector = vectorizer.embed_sentence(user_response)
-            point_returned: PointStruct = self.vector_db.query_collection(
+            points: List[PointStruct] = self.vector_db.query_collection(
                 collection_name=self.db_collections[0],
                 query_vector=query_vector
             )
+
+            docs_string = [point.payload['embedded_text'] for point in points]
+
             rag_prompt += "Given this context, answer the user's query.\n"
             rag_prompt += (
-                f"Context: {point_returned.payload['embedded_text']}\n"
+                f"Context: {docs_string}\n"
             )
             print("\n\nPrompt given to bot: \n", rag_prompt, "\n\n")
 

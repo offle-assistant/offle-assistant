@@ -112,6 +112,12 @@ class CLI:
         )
 
         parser_chat.add_argument(
+            "--rag", "-r",
+            action="store_true",
+            help="Enables RAG "
+        )
+
+        parser_chat.add_argument(
             "--hostname", "-n",
             type=str,
             default="localhost",

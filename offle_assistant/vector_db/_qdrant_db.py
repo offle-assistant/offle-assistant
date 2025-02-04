@@ -1,12 +1,21 @@
 import hashlib
 import pathlib
-from typing import Optional, Type
+from typing import Optional, Type, List
 import sys
 
 import numpy as np
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
-from qdrant_client.models import Filter, FieldCondition, MatchValue
+from qdrant_client.models import (
+    Distance,
+    VectorParams,
+    PointStruct,
+    SearchParams
+)
+from qdrant_client.models import (
+    Filter,
+    FieldCondition,
+    MatchValue,
+)
 
 from offle_assistant.vectorizer import (
     Vectorizer,
@@ -80,14 +89,17 @@ class QdrantDB(VectorDB):
     def query_collection(
         self,
         collection_name: str,
-        query_vector: np.array
-    ) -> PointStruct:
+        query_vector: np.array,
+    ) -> List[PointStruct]:
+        search_params = SearchParams(hnsw_ef=512)
         search_results = self.client.search(
             collection_name=collection_name,
             query_vector=query_vector,
-            limit=2
+            limit=1,
+            search_params=search_params
         )
-        return search_results[0]
+
+        return search_results
 
     def delete_collection(
         self,

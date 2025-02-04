@@ -68,7 +68,7 @@ def chat_command(
             for chunk in persona.chat(
                 user_response,
                 stream=True,
-                perform_rag=True
+                perform_rag=args.rag
             ):
                 fprint(chunk, end='', flush=True)
             fprint("\n")
