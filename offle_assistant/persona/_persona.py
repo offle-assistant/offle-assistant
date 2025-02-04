@@ -1,8 +1,14 @@
 import ollama
+from ollama import ChatResponse
 import pathlib
-from typing import Union, Generator
+from typing import Union, Generator, List, Optional
 import yaml
 import sys
+
+from qdrant_client.models import PointStruct
+
+from offle_assistant.vector_db import VectorDB
+from offle_assistant.vectorizer import Vectorizer
 
 
 class Persona:
@@ -12,24 +18,30 @@ class Persona:
         name: str,
         description: str,
         system_prompt: str,
+        db_collections: List[str],
         model: str,
-        hostname: str = 'localhost',
-        port: int = 11434
+        vector_db: Optional[VectorDB] = None,
+        llm_server_hostname: str = 'localhost',
+        llm_server_port: int = 11434,
     ):
-        self.persona_id = persona_id
-        self.name = name
-        self.description = description
-        self.system_prompt = f"Your name is{self.name}" + system_prompt
-        self.model = model
-        self.hostname = hostname
-        self.port = port
+        self.persona_id: str = persona_id
+        self.name: str = name
+        self.description: str = description
+        self.db_collections: List[str] = db_collections
+        self.system_prompt: str = f"Your name is {self.name}. " + system_prompt
+        self.model: str = model
+        self.vector_db = vector_db
+        self.llm_server_hostname: str = llm_server_hostname
+        self.llm_server_port: int = llm_server_port
 
         # This handles providing a server ip/port
         try:
-            server_url = f'http://{self.hostname}:{self.port}'
+            server_url = (
+                f'http://{self.llm_server_hostname}:{self.llm_server_port}'
+            )
             self.chat_client = ollama.Client(server_url)
         except Exception as e:
-            print(f"An exception occurred: {e}")
+            print(f"An exception occurred while connecting to llm server: {e}")
             sys.exit(1)
 
         self.system_prompt_message = {
@@ -46,16 +58,35 @@ class Persona:
             return persona_config
 
     def chat(
-        self, user_response, stream: bool = False
+        self,
+        user_response,
+        stream: bool = False,
+        perform_rag: bool = False
     ) -> Union[str, Generator[str, None, None]]:
+        rag_prompt = ""
+        if perform_rag:
+            vectorizer: Vectorizer = self.get_vectorizer(
+                self.db_collections[0]
+            )
+            query_vector = vectorizer.embed_sentence(user_response)
+            point_returned: PointStruct = self.vector_db.query_collection(
+                collection_name=self.db_collections[0],
+                query_vector=query_vector
+            )
+            rag_prompt += "Given this context, answer the user's query.\n"
+            rag_prompt += (
+                f"Context: {point_returned.payload['embedded_text']}\n"
+            )
+            print("\n\nPrompt given to bot: \n", rag_prompt, "\n\n")
+
         user_message = {
             "role": "user",
-            "content": "User: " + user_response
+            "content": rag_prompt + "User: " + user_response
         }
         self.message_chain.append(self.system_prompt_message)
         self.message_chain.append(user_message)
 
-        chat_response = self.chat_client.chat(
+        chat_response: ChatResponse = self.chat_client.chat(
             model=self.model,
             messages=self.message_chain,
             stream=stream,
@@ -89,6 +120,19 @@ class Persona:
             self.message_chain.append(chat_message)
 
             return response_text
+
+    def get_rag_prompt(
+        self,
+        user_response: str,
+    ) -> str:
+        rag_prompt: str = ""
+        return rag_prompt
+
+    def get_vectorizer(self, collection_name: str) -> Vectorizer:
+        vectorizer: Vectorizer = self.vector_db.get_collection_vectorizer(
+            collection_name=collection_name
+        )
+        return vectorizer
 
 
 def get_persona_strings(config_path: pathlib.Path) -> list[Persona]:

@@ -77,23 +77,26 @@ class QdrantDB(VectorDB):
         else:
             print("Collection exists.")
 
-    def remove_collection(
+    def query_collection(
+        self,
+        collection_name: str,
+        query_vector: np.array
+    ) -> PointStruct:
+        search_results = self.client.search(
+            collection_name=collection_name,
+            query_vector=query_vector,
+            limit=2
+        )
+        return search_results[0]
+
+    def delete_collection(
         self,
         collection_name: str
     ):
         """
         This removes a collection entirely.
         """
-        self.client.delete_collection(collection_name=collection_name)
-
-    def clear_collection(
-        self,
-        collection_name: str
-    ):
-        """
-        This removes all entries from a collection.
-        """
-        self.remove_collection(collection_name=collection_name)
+        return self.client.delete_collection(collection_name=collection_name)
 
     def add_document(
         self,
@@ -104,18 +107,18 @@ class QdrantDB(VectorDB):
         doc_hash: str = self.compute_doc_hash(doc_path)  # hash of doc content
 
         print(
-            f"\nChecking if document, {doc_path.name} is in database."
+            f"\nChecking if document, {doc_path.name}, is in database."
         )
 
-        doc_path: pathlib.Path = self.search_collection_by_doc_id(
+        existing_doc_path: pathlib.Path = self.search_collection_by_doc_id(
             doc_id=doc_hash,
             collection_name=collection_name
         )
-        if doc_path:  # Is document already in db.
+        if existing_doc_path:  # Is document already in db.
             print(
                 f"\tSkipping document... {doc_path.name} "
                 "already exists in database.\n"
-                f"\tSource file located at: {doc_path}\n"
+                f"\tSource file located at: {existing_doc_path}\n"
             )
         else:  # if not, add it
             vectorizer: Vectorizer = self.get_collection_vectorizer(

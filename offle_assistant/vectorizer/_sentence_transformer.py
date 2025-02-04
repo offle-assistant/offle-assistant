@@ -1,6 +1,7 @@
 import pathlib
 import re
 from typing import Union, List
+import sys
 
 import numpy as np
 import pymupdf4llm
@@ -32,9 +33,23 @@ class SentenceTransformerVectorizer(Vectorizer):
         self,
         doc_path: pathlib.Path
     ):
-        md_text: str = pymupdf4llm.to_markdown(doc_path)
+        try:
+            md_text: str = pymupdf4llm.to_markdown(doc_path)
+        except Exception as e:
+            print(f"Exception encountered: {e}")
+            sys.exit(1)
+
+        if len(md_text) <= 0:  # Catch empty md_text variable
+            print(
+                f"An error occurred while converting {doc_path} "
+                "to a digestible format."
+            )
+            sys.exit(1)
+
         paragraphs: List[str] = self.split_on_lines(markdown_text=md_text)
+
         embeddings = self.embed_chunks(chunks=paragraphs)
+
         return (paragraphs, embeddings)
 
     def embed_sentence(
@@ -55,7 +70,11 @@ class SentenceTransformerVectorizer(Vectorizer):
             This is only intended for use through one of the
             interfaces: embed_chunks or embed_sentence
         """
-        embeddings = self.model.encode(text)
+        try:
+            embeddings = self.model.encode(text)
+        except Exception as e:
+            print(f"Exception encountered: {e}")
+            sys.exit(1)
         return embeddings
 
     def split_on_lines(

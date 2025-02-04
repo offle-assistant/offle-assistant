@@ -12,6 +12,13 @@ class Vectorizer(ABC):
         pass
 
     @abstractmethod
+    def embed_sentence(
+        self,
+        sentence: str
+    ) -> np.array:
+        pass
+
+    @abstractmethod
     def embed_chunks(
         self,
         chunks: List[str]

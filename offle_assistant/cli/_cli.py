@@ -55,20 +55,25 @@ class CLI:
         )
 
         parser_rag.add_argument(
-            "persona", type=str,
-            nargs="?",
-            default=None,
-            help="Specify the persona name"
-        )
-
-        parser_rag.add_argument(
             "--add", "-a",
             type=str,
             help="A file or directory to add to the RAG database."
         )
 
         parser_rag.add_argument(
+            "--collection", "-c",
+            type=str,
+            required=True,
+            help="Which collection to operate over."
+        )
+
+        parser_rag.add_argument(
             "--list", "-l",
+            action="store_true",
+        )
+
+        parser_rag.add_argument(
+            "--delete", "-d",
             action="store_true",
         )
 

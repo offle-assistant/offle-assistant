@@ -106,14 +106,34 @@ For this method, documents will need to have a length maximum.
     * Current issues:
         Right now, I don't have a great way to handle different models
 
-* Create function that performs the same embedding process on a query sentence.
-* Create function which queries the database.
+* Create function that performs the same embedding process on a query sentence. (COMPLETED)
+* Create function which queries the database. (NEXT ON THE LIST)
+    Part of this is going to be reformatting the config file so that the correct database collection is queried.
+    Ideas:
+        * For now, let's just have one DB. The DB is specified in the global\_settings key of the config.
+        * Users can specify which collections they have access to.
+        * Down the road, we should have collections have "ownership" so that users can create new collections and have full read/write access to them
+            or they can use the administrator's collections.
+    GamePlan:
+    * Catch some sort of query phrase "query test\_db: What is a large language model?"
+    * Persona connects to the qdrant server and grabs the vectorizer from the specific collection.
+    * Persona uses Vectorizer.embed\_sentence(query)
+    * Persona queries the qdrant database for a hit from the database.
+    * Persona uses this context for it's response.
+    I need to think about this more. Where should the retrieval happen? What should be retrieved? Just the string for the chunk? Or should there be a more
+    informative, rich return?
+    Should there be a chat interface method that redirects to normal chat and rag chat methods? I need a break.
+
 * Create new Persona.chat\_w\_rag(user\_query) which performs chat but with the context prepended to the query.
     * I also want this to provide the excerpt that was the hit to the user and tell the user explicitly where it got it from.
     * It must include path to the file and line number.
 * Create a catch in the cli which intercepts messages including something like "Search Database for: " and calls the new Persona.chat\_w\_rag method
 * Add a test to make sure it's working. One possible automated test would be to check a query that exactly matches a line in the corpus.
 * Create --add option to the rag subcommand that gives you the ability to add documents to the rag dir.
+
+
+### Switch out jsonSchema for Pydantic
+    Pydantic is just way more legible
 
 ### Refactor QdrantServer (COMPLETED)
 * This needs to be a child class of a more general VectorDatabase class.

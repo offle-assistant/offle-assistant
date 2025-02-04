@@ -10,11 +10,12 @@ def rag_command(
     args,
     config: Config
 ):
+    qdrant_db = QdrantDB()
     if args.add is not None:
         doc_path: pathlib.Path = pathlib.Path(args.add).expanduser()
-        qdrant_db = QdrantDB()
-        # qdrant_server.clear_db()
-        collection_name = "new_db"
+
+        collection_name: str = args.collection
+
         qdrant_db.add_collection(collection_name=collection_name)
         qdrant_db.add_document(
             doc_path=doc_path,
@@ -26,6 +27,13 @@ def rag_command(
             f"{qdrant_db.get_entry_count(collection_name=collection_name)}"
             " entries."
         )
+    elif args.delete is True:
+        collection_name: str = args.collection
+        response = qdrant_db.delete_collection(collection_name=collection_name)
+        if response is True:
+            print(f"Successfully removed collection, {collection_name}")
+        else:
+            print(f"Could not remove collection, {collection_name}")
 
     # rag_dir_list = []
     # if args.persona is not None:
