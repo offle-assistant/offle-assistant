@@ -174,6 +174,18 @@ Create RAG options dict/struct so that we can set things like threshold, num of 
 ### Switch out jsonSchema for Pydantic (COMPLETE)
     Pydantic is just way more legible
 
+### Create a web server with a basic rest api
+I just need a small rest API running on fastAPI.
+
+### Create message history
+I want at least a log of conversations per-persona. One file per conversation.
+
+
+------------------------------------------------
+Further along in the future
+------------------------------------------------
+
+
 ### Database improvements
 
 I need to rethink how the DB will be used.
@@ -184,11 +196,59 @@ So two use cases for the database I guess.
     * One way to search is "Can you answer questions about a specific text?". 
     * The other way is, "What kinds of characteristics does mecury have?" or "What is my company's vacation policy?"
 
+
+### Use case idea
+In the user interface, when we are saying "Given this document, can you answer questions?" if the doc is too big,
+we could read it into a database in chunks and query it with RAG.
+
+
+### Installation instructions
+Create installation instructions for macOS/Linux with a script that can automate the process.
+    install ollama
+    copy config to proper location
+    poetry install
+
 ### User generated chunking rules
 This is for way in the future. But I think there should be a way to mark up a document in the GUI for the kinds of chunks you want.
 Once a user makes these markings, they can apply the same splits to every doc of the same general format.
 To solve this, maybe we make LLM generated regex expressions to catch things.
 The user should then be able to cycle through the documents in that folder to make sure they're getting parsed correctly.
+
+### RAG framework tested with GNU documentation
+While RAG docs should be added via a commandline tool, they should then be stored in a config file that is user-readable and user-editable.
+Some notes on this... It might be better to enforce a structure to the documents. A separate tool can be developed to organize documents
+into a structure/format that offle-assistant can parse easily.
+*  Structured Text:
+    * like GNU docs
+    * Ability to specify headers/subheaders
+    * Ability for a user to load in documents
+    * Should save docs and index to a location like ~/.assistant
+* Unstructured Text:
+    * Huge block of text
+    * This should use windows.
+    * User can specify window size
+        * \# of paragraphs
+        * \# of sentences
+* Semi-Structured text
+    * Novel with chapters
+    * collection of news articles
+    * scientific papers
+    * This should have a mix of blocks and windows probably.
+
+### System check
+There should really be a system check in this thing when you try to use a model. We should at least check to see if model size
+exceeds VRAM and system RAM and give messages accordingly so people know that the model they're about to use is too big
+for their system.
+
+### RAG Future ideas
+The more I research this, the more I feel like we need a custom solution. Table, charts, and images in latex files could be really important. Therefore,
+some sort of text-based description of the image could be really important. In the case that we see something like this, we could have an image model
+read the figure and create a textual description of the table and have this be the embedding. And then we store the path to the table in the metadata
+for the PointStruct. If we get a hit, we return the textual original figure as well as some surrounding text.
+
+### I just need to add support for both the ollama-python and the openai-python API
+This is just going to be necessary unfortunately.
+ollama/openai support isn't 100% done. nor is it guaranteed to keep existing in the future.
 
 
 ### Create smarter chunking algorithm
@@ -219,36 +279,9 @@ initialize the right VectorDb class for the right database.
     next chunk
 
 
-### Use case idea
-In the user interface, when we are saying "Given this document, can you answer questions?" if the doc is too big,
-we could read it into a database in chunks and query it with RAG.
-
-### System check
-There should really be a system check in this thing when you try to use a model. We should at least check to see if model size
-exceeds VRAM and system RAM and give messages accordingly so people know that the model they're about to use is too big
-for their system.
-
-### RAG Future ideas
-The more I research this, the more I feel like we need a custom solution. Table, charts, and images in latex files could be really important. Therefore,
-some sort of text-based description of the image could be really important. In the case that we see something like this, we could have an image model
-read the figure and create a textual description of the table and have this be the embedding. And then we store the path to the table in the metadata
-for the PointStruct. If we get a hit, we return the textual original figure as well as some surrounding text.
-
-### Seriously consider switch ollama python api out for openai api
-A few reasons this might be necessary.
-* Documentation for ollama is quite sparse.
-* No support for using OpenAI models without the OpenAI api.
-* Ollama doesn't have out-of-the-box support for streaming responses while using tools.
-    * Also, tool use is just confusing in ollama
-
-### Create message history
-I want at least a log of conversations per-persona. One file per conversation.
-
-### Installation instructions
-Create installation instructions for macOS/Linux with a script that can automate the process.
-    install ollama
-    copy config to proper location
-    poetry install
+------------------------------------------------
+no longer relevant
+------------------------------------------------
 
 ### Ollama wrapper to facilitate multi-user use cases.
 There are certain aspects of ollama that don't lend it to easy use on a system with multiple users.
@@ -258,26 +291,5 @@ Things that might work well:
 * If two users pull the same model to the OLLAMA\_MODELS directory, will they sync up?
 * How are user permissions handled in this case? Is the model owned by the person who pulled it? We may need to create an ollama user that owns the models.
 
-### Ollama modelfile support
+### Ollama modelfile support 
 Think about the ability to use ollama native modelfiles with the config. In the very least, we should be able to translate a modelfile into a config entry.
-
-### RAG framework tested with GNU documentation
-While RAG docs should be added via a commandline tool, they should then be stored in a config file that is user-readable and user-editable.
-Some notes on this... It might be better to enforce a structure to the documents. A separate tool can be developed to organize documents
-into a structure/format that offle-assistant can parse easily.
-*  Structured Text:
-    * like GNU docs
-    * Ability to specify headers/subheaders
-    * Ability for a user to load in documents
-    * Should save docs and index to a location like ~/.assistant
-* Unstructured Text:
-    * Huge block of text
-    * This should use windows.
-    * User can specify window size
-        * \# of paragraphs
-        * \# of sentences
-* Semi-Structured text
-    * Novel with chapters
-    * collection of news articles
-    * scientific papers
-    * This should have a mix of blocks and windows probably.
