@@ -164,15 +164,13 @@ object, not a bare iterator. (Side note, I think I have the type hints wrong, I 
 marked as a generator instead of an iterator.)
 
 ### RAG Improvements 2
-Retrieval object should also provide a distance property.
+Retrieval object should also provide a distance property. (COMPLETE)
 
-(Let's wait on this) Clean up PDF parsing into Markdown. Maybe this happens in the markdown step?
+Allow addition of LaTex files. (COMPLETE)
 
-Allow addition of text files
-
-Allow for adding whole directories recursively to DB.
-
-Create smarter chunking algorithm maybe chunking with minimum token counts.
+Create smarter chunking algorithm 
+    * maybe chunking with minimum token counts.
+    * Maybe with chunk overlaps
 
 Create RAG options dict/struct so that we can set things like threshold, num of chunks, etc
     Eventually, I want this type of thing displayed in the UI.

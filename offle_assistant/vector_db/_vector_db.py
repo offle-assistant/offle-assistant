@@ -13,10 +13,14 @@ class DbReturnObj:
         file_name: str,
         doc_path: pathlib.Path,
         document_string: str,
+        euclidean_distance: float,
+        cosine_similarity: float,
     ):
-        self.file_name = file_name
-        self.doc_path = doc_path
-        self.document_string = document_string
+        self.file_name: str = file_name
+        self.doc_path: pathlib.Path = doc_path
+        self.document_string: str = document_string
+        self.euclidean_distance: float = euclidean_distance
+        self.cosine_similarity: float = cosine_similarity
 
     def get_prompt_string(self) -> str:
         rag_prompt = ""

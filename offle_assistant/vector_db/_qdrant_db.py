@@ -96,6 +96,7 @@ class QdrantDB(VectorDB):
         search_results = self.client.search(
             collection_name=collection_name,
             query_vector=query_vector,
+            with_vectors=True,
             limit=1,
             search_params=search_params,
             # score_threshold=.8  # only obtain results better than this
@@ -106,11 +107,21 @@ class QdrantDB(VectorDB):
         file_name: pathlib.Path = hit.payload["file_name"]
         doc_path: pathlib.Path = hit.payload["doc_path"]
         hit_text: str = hit.payload["embedded_text"]
+        hit_vector: np.array = np.array(hit.vector)
+        euclidean_distance = np.linalg.norm(query_vector - hit_vector)
+        cosine_similarity = np.dot(
+            query_vector,
+            hit_vector
+        ) / (
+            np.linalg.norm(query_vector) * np.linalg.norm(hit_vector)
+        )
 
         db_return_obj: DbReturnObj = DbReturnObj(
             file_name=file_name,
             doc_path=doc_path,
-            document_string=hit_text
+            document_string=hit_text,
+            euclidean_distance=euclidean_distance,
+            cosine_similarity=cosine_similarity
         )
 
         return db_return_obj

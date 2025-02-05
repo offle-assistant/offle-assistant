@@ -88,6 +88,12 @@ def chat_command(
                 fprint(rag_string)
                 fprint("---" * 10)
                 fprint("End prompt")
+                fprint(
+                    f"Distance from query: {rag_response.euclidean_distance}"
+                )
+                fprint(
+                    f"Cosine Similarity: {rag_response.cosine_similarity}"
+                )
                 fprint(f"Document path: {rag_response.doc_path}")
                 fprint("\n")
 
