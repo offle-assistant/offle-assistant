@@ -59,77 +59,77 @@ Right now, I think there's still some formatting stuff tied into the individual 
 Maybe the formatting options for individual personas should be removed for now. Formatting stuff is only global
 
 ### Simplified RAG functionality (COMPLETED)
-Create simplified RAG system. supply yaml file with a directory where the RAG docs live. If there is a RAG index file in the root of this directory,
-then use this for RAG. If there isn't, create the index. For the time being, each document gets its own vector representation and a hit will return
-the whole document. This will be well suited for reading papers. This should include another subcommand called "rag" which has --generate and --list
-options. An isolated --generate option will generate RAG indices for all personas, but you can provide a persona name to generate RAG indices for
-only that persona.
+    Create simplified RAG system. supply yaml file with a directory where the RAG docs live. If there is a RAG index file in the root of this directory,
+    then use this for RAG. If there isn't, create the index. For the time being, each document gets its own vector representation and a hit will return
+    the whole document. This will be well suited for reading papers. This should include another subcommand called "rag" which has --generate and --list
+    options. An isolated --generate option will generate RAG indices for all personas, but you can provide a persona name to generate RAG indices for
+    only that persona.
 
-Indices should be per-sentence in each document. A hit will return the entire document.
-This has obvious limitations. If a document is very long, it will fill up the entire context window.
-For this method, documents will need to have a length maximum.
+    Indices should be per-sentence in each document. A hit will return the entire document.
+    This has obvious limitations. If a document is very long, it will fill up the entire context window.
+    For this method, documents will need to have a length maximum.
 
-# Subtasks
-* Create directory in ~/.config/offle-assistant/rag/ralph/ which will house the docs. (COMPLETED)
-* Update the config file accordingly (COMPLETED)
-* Populate the directory with PDF files in the ./src/ (COMPLETED)
-* Choose a vector database provider: (COMPLETE)
-    * We can actually support multiple.
-    * For now, lets go with qdrant
-* Set up the database
-    This is as simple as running a docker container. I should make sure to set it up with docker-compose for maintainability.
-* Create subcommand which indexes all the documents and stores the vectors in the database
-    * Takes everything from the src dir and converts them into parseable formats with pymupdf4llm
-    * Sentence-level or paragraph-level vector embeddings
-    * Store them in the database
-        This will require payloads.
-        {
-            "doc\_id": "12i1qrf8",  # This is a hash of the document. Guarantees uniqueness and will change if the doc changes.
-            "file\_name: "scientific\_paper.pdf",
-            "chunk\_idx": 4,  # useful when I want to provide text from around the hit. "select embedded\_text where doc\_id is 12i1qrf8 and chunk\_idx is 3"
-            "file\_path": "path/to/file/scientific\_paper.pdf",  # path may change. Further case for add/delete documents tools in the cli tool
-            "embedded\_text": "This is very important information that you just queried for.",
-            "subset\_id": "ralph",  # For now, this will be set by the bot. But user's should be able to select a list of subsets they'd like to query.
-        }
-    * I need a single function which takes a PDF and then:
-        * Creates a hash of the PDF (COMPLETED)
-        * Checks to see if the hash (doc\_id) exists in the database. (COMPLETED)
-        If it does
-        * return
-        If it doesn't
-        * Converts it into markdown (COMPLETED)
-        * Chunks it into separate paragraphs (COMPLETED)
-        * Performs embeddings on each paragraph making sure to take note of the index of each chunk  (COMPLETED)
-            this will be its own function so I can try to parallelize here but also so i can plug in different vectorizers trivially.
-            use sentence-transformers. Where is the model stored locally?
-        * returns a list of entries to the Qdrant database. (a dictionary with a vector and a payload) (COMPLETED)
-    * Current issues:
-        Right now, I don't have a great way to handle different models
+    # Subtasks
+    * Create directory in ~/.config/offle-assistant/rag/ralph/ which will house the docs. (COMPLETED)
+    * Update the config file accordingly (COMPLETED)
+    * Populate the directory with PDF files in the ./src/ (COMPLETED)
+    * Choose a vector database provider: (COMPLETE)
+        * We can actually support multiple.
+        * For now, lets go with qdrant
+    * Set up the database
+        This is as simple as running a docker container. I should make sure to set it up with docker-compose for maintainability.
+    * Create subcommand which indexes all the documents and stores the vectors in the database
+        * Takes everything from the src dir and converts them into parseable formats with pymupdf4llm
+        * Sentence-level or paragraph-level vector embeddings
+        * Store them in the database
+            This will require payloads.
+            {
+                "doc\_id": "12i1qrf8",  # This is a hash of the document. Guarantees uniqueness and will change if the doc changes.
+                "file\_name: "scientific\_paper.pdf",
+                "chunk\_idx": 4,  # useful when I want to provide text from around the hit. "select embedded\_text where doc\_id is 12i1qrf8 and chunk\_idx is 3"
+                "file\_path": "path/to/file/scientific\_paper.pdf",  # path may change. Further case for add/delete documents tools in the cli tool
+                "embedded\_text": "This is very important information that you just queried for.",
+                "subset\_id": "ralph",  # For now, this will be set by the bot. But user's should be able to select a list of subsets they'd like to query.
+            }
+        * I need a single function which takes a PDF and then:
+            * Creates a hash of the PDF (COMPLETED)
+            * Checks to see if the hash (doc\_id) exists in the database. (COMPLETED)
+            If it does
+            * return
+            If it doesn't
+            * Converts it into markdown (COMPLETED)
+            * Chunks it into separate paragraphs (COMPLETED)
+            * Performs embeddings on each paragraph making sure to take note of the index of each chunk  (COMPLETED)
+                this will be its own function so I can try to parallelize here but also so i can plug in different vectorizers trivially.
+                use sentence-transformers. Where is the model stored locally?
+            * returns a list of entries to the Qdrant database. (a dictionary with a vector and a payload) (COMPLETED)
+        * Current issues:
+            Right now, I don't have a great way to handle different models
 
-* Create function that performs the same embedding process on a query sentence. (COMPLETED)
-* Create function which queries the database. (NEXT ON THE LIST)
-    Part of this is going to be reformatting the config file so that the correct database collection is queried.
-    Ideas:
-        * For now, let's just have one DB. The DB is specified in the global\_settings key of the config.
-        * Users can specify which collections they have access to.
-        * Down the road, we should have collections have "ownership" so that users can create new collections and have full read/write access to them
-            or they can use the administrator's collections.
-    GamePlan:
-    * Catch some sort of query phrase "query test\_db: What is a large language model?"
-    * Persona connects to the qdrant server and grabs the vectorizer from the specific collection.
-    * Persona uses Vectorizer.embed\_sentence(query)
-    * Persona queries the qdrant database for a hit from the database.
-    * Persona uses this context for it's response.
-    I need to think about this more. Where should the retrieval happen? What should be retrieved? Just the string for the chunk? Or should there be a more
-    informative, rich return?
-    Should there be a chat interface method that redirects to normal chat and rag chat methods? I need a break.
+    * Create function that performs the same embedding process on a query sentence. (COMPLETED)
+    * Create function which queries the database. (NEXT ON THE LIST)
+        Part of this is going to be reformatting the config file so that the correct database collection is queried.
+        Ideas:
+            * For now, let's just have one DB. The DB is specified in the global\_settings key of the config.
+            * Users can specify which collections they have access to.
+            * Down the road, we should have collections have "ownership" so that users can create new collections and have full read/write access to them
+                or they can use the administrator's collections.
+        GamePlan:
+        * Catch some sort of query phrase "query test\_db: What is a large language model?"
+        * Persona connects to the qdrant server and grabs the vectorizer from the specific collection.
+        * Persona uses Vectorizer.embed\_sentence(query)
+        * Persona queries the qdrant database for a hit from the database.
+        * Persona uses this context for it's response.
+        I need to think about this more. Where should the retrieval happen? What should be retrieved? Just the string for the chunk? Or should there be a more
+        informative, rich return?
+        Should there be a chat interface method that redirects to normal chat and rag chat methods? I need a break.
 
-* Create new Persona.chat\_w\_rag(user\_query) which performs chat but with the context prepended to the query.
-    * I also want this to provide the excerpt that was the hit to the user and tell the user explicitly where it got it from.
-    * It must include path to the file and line number.
-* Create a catch in the cli which intercepts messages including something like "Search Database for: " and calls the new Persona.chat\_w\_rag method
-* Add a test to make sure it's working. One possible automated test would be to check a query that exactly matches a line in the corpus.
-* Create --add option to the rag subcommand that gives you the ability to add documents to the rag dir.
+    * Create new Persona.chat\_w\_rag(user\_query) which performs chat but with the context prepended to the query.
+        * I also want this to provide the excerpt that was the hit to the user and tell the user explicitly where it got it from.
+        * It must include path to the file and line number.
+    * Create a catch in the cli which intercepts messages including something like "Search Database for: " and calls the new Persona.chat\_w\_rag method
+    * Add a test to make sure it's working. One possible automated test would be to check a query that exactly matches a line in the corpus.
+    * Create --add option to the rag subcommand that gives you the ability to add documents to the rag dir.
 
 ### Refactor QdrantServer (COMPLETED)
 * This needs to be a child class of a more general VectorDatabase class.
@@ -149,7 +149,7 @@ Right now the embeddings are just done with a bunch of loose functions. This sho
 the SentenceTransformerVectorizer constructor will take the model name as a parameter.
 This way, I'll be able to share one interface for all vectorizers.
 
-### Refactor Create parent classes, interfaces, for Vectorizer and VectorDB (Completed)
+### Refactor Create parent classes, interfaces, for Vectorizer and VectorDB (COMPLETED)
 I need to make the interfaces for QdrantDB and Vectorizer so that we can trivially add new Vectorizers and Vector Databases
 
 
@@ -163,13 +163,16 @@ Whether we're streaming or not streaming, I think the return value of the Person
 object, not a bare iterator. (Side note, I think I have the type hints wrong, I have the Chat.response for streaming
 marked as a generator instead of an iterator.)
 
-### RAG Improvements 2
+### RAG Improvements 2 (COMPLETE)
 Retrieval object should also provide a distance property. (COMPLETE)
 
 Allow addition of LaTex files. (COMPLETE)
 
 Create RAG options dict/struct so that we can set things like threshold, num of chunks, etc (COMPLETED)
     Eventually, I want this type of thing displayed in the UI.
+
+### Switch out jsonSchema for Pydantic (COMPLETE)
+    Pydantic is just way more legible
 
 ### Database improvements
 
@@ -180,6 +183,12 @@ For example, If I'm looking for a specific piece of information from a specific 
 So two use cases for the database I guess. 
     * One way to search is "Can you answer questions about a specific text?". 
     * The other way is, "What kinds of characteristics does mecury have?" or "What is my company's vacation policy?"
+
+### User generated chunking rules
+This is for way in the future. But I think there should be a way to mark up a document in the GUI for the kinds of chunks you want.
+Once a user makes these markings, they can apply the same splits to every doc of the same general format.
+To solve this, maybe we make LLM generated regex expressions to catch things.
+The user should then be able to cycle through the documents in that folder to make sure they're getting parsed correctly.
 
 
 ### Create smarter chunking algorithm
@@ -224,9 +233,6 @@ The more I research this, the more I feel like we need a custom solution. Table,
 some sort of text-based description of the image could be really important. In the case that we see something like this, we could have an image model
 read the figure and create a textual description of the table and have this be the embedding. And then we store the path to the table in the metadata
 for the PointStruct. If we get a hit, we return the textual original figure as well as some surrounding text.
-
-### Switch out jsonSchema for Pydantic (COMPLETE)
-    Pydantic is just way more legible
 
 ### Seriously consider switch ollama python api out for openai api
 A few reasons this might be necessary.
