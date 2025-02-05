@@ -9,6 +9,16 @@ import pypandoc
 def latex_to_md(
     root_dir: pathlib.Path,
 ) -> str:
+    """
+
+    The reason this is so complex is because there isn't an enforced
+    naming pattern for latex files. The main file can be called anything.
+    So here, we're going through and counting up tags that make it more
+    likely that a given doc is the main file and then we order them from
+    most to least likely and then just try parsing them :/ not ideal but
+    it's what we have right now.
+
+    """
 
     tex_files = [f for f in os.listdir(root_dir) if f.endswith(".tex")]
 
