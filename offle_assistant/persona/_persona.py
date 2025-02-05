@@ -32,6 +32,7 @@ class Persona:
         db_collections: List[str],
         model: str,
         vector_db: Optional[VectorDB] = None,
+        query_threshold: Optional[float] = None,
         llm_server_hostname: str = 'localhost',
         llm_server_port: int = 11434,
     ):
@@ -44,6 +45,7 @@ class Persona:
         self.vector_db = vector_db
         self.llm_server_hostname: str = llm_server_hostname
         self.llm_server_port: int = llm_server_port
+        self.query_threshold: Optional[float] = query_threshold
 
         # This handles providing a server ip/port
         try:
@@ -68,6 +70,34 @@ class Persona:
             persona_config = config_dict["personas"][self.persona_id]
             return persona_config
 
+    def get_RAG_prompt(
+        self,
+        RAG_hit: DbReturnObj = None,
+        # rag_template: Optional[] = None,
+    ):
+        """
+        There's probably a better way to do this.
+        I will fix this once I have a better idea of how
+        the user will be able to customize the rag prompt.
+
+        Probably, what I'll do here is have an object
+        called a rag template which will have a bunch of properties
+        on it for different aspects of the prompt and then there
+        will be a method on it that will return a dictionary
+        in a specific format that we can use to fill in fields
+        in the prompt.
+        """
+        if RAG_hit.get_hit_success() is True:
+            rag_prompt = (
+                "Given the following context, answer the user's query:\n\n"
+            )
+            rag_prompt += (
+                f"Context: {RAG_hit.get_hit_text()}\n"
+            )
+            return rag_prompt
+        else:
+            return ""
+
     def chat(
         self,
         user_response,
@@ -87,9 +117,8 @@ class Persona:
                 collection_name=self.db_collections[0]
             )
 
-            rag_prompt += (
-                rag_response.get_prompt_string() if
-                rag_response is not None else ""
+            rag_prompt += self.get_RAG_prompt(
+                RAG_hit=rag_response,
             )
 
         user_message = {
@@ -143,13 +172,6 @@ class Persona:
             )
             return persona_chat_response
 
-    def get_rag_prompt(
-        self,
-        user_response: str,
-    ) -> str:
-        rag_prompt: str = ""
-        return rag_prompt
-
     def retrieve_context_doc(
         self,
         query_string: str,
@@ -161,7 +183,8 @@ class Persona:
         query_vector = vectorizer.embed_sentence(query_string)
         db_return_obj: DbReturnObj = self.vector_db.query_collection(
             collection_name=collection_name,
-            query_vector=query_vector
+            query_vector=query_vector,
+            score_threshold=self.query_threshold
         )
 
         return db_return_obj
@@ -177,7 +200,7 @@ class PersonaChatResponse:
     def __init__(
         self,
         chat_response: Union[str, Generator[str, None, None]],
-        rag_response: str,  # eventually, an object
+        rag_response: DbReturnObj,
     ):
         self.chat_response: Union[str, Generator[str, None, None]] = chat_response
         self.rag_response: DbReturnObj = rag_response

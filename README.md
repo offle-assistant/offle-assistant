@@ -168,14 +168,11 @@ Retrieval object should also provide a distance property. (COMPLETE)
 
 Allow addition of LaTex files. (COMPLETE)
 
-Create smarter chunking algorithm 
-    * maybe chunking with minimum token counts.
-    * Maybe with chunk overlaps
-
-Create RAG options dict/struct so that we can set things like threshold, num of chunks, etc
+Create RAG options dict/struct so that we can set things like threshold, num of chunks, etc (COMPLETED)
     Eventually, I want this type of thing displayed in the UI.
 
 ### Database improvements
+
 I need to rethink how the DB will be used.
 
 For example, If I'm looking for a specific piece of information from a specific source, i.e. a novel, I should be able to tell the agent exactly which source to look in.
@@ -183,6 +180,44 @@ For example, If I'm looking for a specific piece of information from a specific 
 So two use cases for the database I guess. 
     * One way to search is "Can you answer questions about a specific text?". 
     * The other way is, "What kinds of characteristics does mecury have?" or "What is my company's vacation policy?"
+
+
+### Create smarter chunking algorithm
+One big thing I need to consider is that there may be different chunking methods/retrievals required. 
+* One example: Someone might want to chunk their docs manually. This could work where each chunk is in
+its own doc, and a hit on one sentence with similarity search returns the entire doc.
+* Another example: the similarity by chunks example we already have.
+* Another example: chunks are returned in windows. That is, when a chunk gets a hit, we get x chunks before and y chunks after.
+
+will these different methods require different database structures? Or can I keep all this info in the payload and have different
+types of queries? 
+    Maybe a specific type of query will return everything from the parent doc concatenated back together.
+    This is probably the way. I can handle each of the above 3 methods with the current implementation
+    So basically, we just need a parameter in VectorDb.query\_collection() that sets how we search the db?
+        only weird thing about this is that the "window\_size" related options will be there regardless of
+        whether we're doing a windowed search. This could be confusing but I can live with it. We should
+        have a console log for this though. Like the window size defaults to None, and if you try to set it
+        without using the windowed parameter, then it gives you a warning.
+
+If I do need different implementations though, I may need to add more info to the metadata entry so that I can
+initialize the right VectorDb class for the right database.
+
+* maybe chunking with minimum token counts.
+* Maybe with chunk overlaps
+* What if I use the vectorizer for this? It would require some heuristics but I could:
+    * Check if a chunk is too small to be on its own.
+    * If it is, check if it has a cosine similarity above a specific threshold with the
+    next chunk
+
+
+### Use case idea
+In the user interface, when we are saying "Given this document, can you answer questions?" if the doc is too big,
+we could read it into a database in chunks and query it with RAG.
+
+### System check
+There should really be a system check in this thing when you try to use a model. We should at least check to see if model size
+exceeds VRAM and system RAM and give messages accordingly so people know that the model they're about to use is too big
+for their system.
 
 ### RAG Future ideas
 The more I research this, the more I feel like we need a custom solution. Table, charts, and images in latex files could be really important. Therefore,
@@ -192,6 +227,13 @@ for the PointStruct. If we get a hit, we return the textual original figure as w
 
 ### Switch out jsonSchema for Pydantic
     Pydantic is just way more legible
+
+### Seriously consider switch ollama python api out for openai api
+A few reasons this might be necessary.
+* Documentation for ollama is quite sparse.
+* No support for using OpenAI models without the OpenAI api.
+* Ollama doesn't have out-of-the-box support for streaming responses while using tools.
+    * Also, tool use is just confusing in ollama
 
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.
