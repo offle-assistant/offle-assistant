@@ -166,11 +166,31 @@ marked as a generator instead of an iterator.)
 ### RAG Improvements 2
 Retrieval object should also provide a distance property.
 
-Clean up PDF parsing into Markdown. Maybe this happens in the markdown step?
+(Let's wait on this) Clean up PDF parsing into Markdown. Maybe this happens in the markdown step?
+
+Allow addition of text files
+
+Allow for adding whole directories recursively to DB.
 
 Create smarter chunking algorithm maybe chunking with minimum token counts.
 
 Create RAG options dict/struct so that we can set things like threshold, num of chunks, etc
+    Eventually, I want this type of thing displayed in the UI.
+
+### Database improvements
+I need to rethink how the DB will be used.
+
+For example, If I'm looking for a specific piece of information from a specific source, i.e. a novel, I should be able to tell the agent exactly which source to look in.
+
+So two use cases for the database I guess. 
+    * One way to search is "Can you answer questions about a specific text?". 
+    * The other way is, "What kinds of characteristics does mecury have?" or "What is my company's vacation policy?"
+
+### RAG Future ideas
+The more I research this, the more I feel like we need a custom solution. Table, charts, and images in latex files could be really important. Therefore,
+some sort of text-based description of the image could be really important. In the case that we see something like this, we could have an image model
+read the figure and create a textual description of the table and have this be the embedding. And then we store the path to the table in the metadata
+for the PointStruct. If we get a hit, we return the textual original figure as well as some surrounding text.
 
 ### Switch out jsonSchema for Pydantic
     Pydantic is just way more legible

@@ -1,13 +1,13 @@
 import pathlib
-import re
 from typing import Union, List
 import sys
 
 import numpy as np
-import pymupdf4llm
+# import pymupdf4llm
 from sentence_transformers import SentenceTransformer
 
 from ._vectorizer import Vectorizer
+from offle_assistant.text_processing import split_on_lines, latex_to_md
 
 
 class SentenceTransformerVectorizer(Vectorizer):
@@ -34,9 +34,9 @@ class SentenceTransformerVectorizer(Vectorizer):
         doc_path: pathlib.Path
     ):
         try:
-            md_text: str = pymupdf4llm.to_markdown(doc_path)
+            md_text: str = latex_to_md(root_dir=doc_path)
         except Exception as e:
-            print(f"Exception encountered: {e}")
+            print(f"Exception encountered while chunking and embedding: {e}")
             sys.exit(1)
 
         if len(md_text) <= 0:  # Catch empty md_text variable
@@ -46,7 +46,7 @@ class SentenceTransformerVectorizer(Vectorizer):
             )
             sys.exit(1)
 
-        paragraphs: List[str] = self.split_on_lines(markdown_text=md_text)
+        paragraphs: List[str] = split_on_lines(text=md_text)
 
         embeddings = self.embed_chunks(chunks=paragraphs)
 
@@ -73,17 +73,9 @@ class SentenceTransformerVectorizer(Vectorizer):
         try:
             embeddings = self.model.encode(text)
         except Exception as e:
-            print(f"Exception encountered: {e}")
+            print(f"Exception encountered while computing embeddings: {e}")
             sys.exit(1)
         return embeddings
-
-    def split_on_lines(
-        self,
-        markdown_text: str
-    ) -> List[str]:
-        paragraphs = re.split(r"\n\s*\n+", markdown_text.strip())
-        paragraphs = [p.strip() for p in paragraphs if p.strip()]
-        return paragraphs
 
     def get_vectorizer_string(self):
         return "sentence-transformer"

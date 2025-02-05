@@ -1,5 +1,6 @@
 import hashlib
 import pathlib
+import os
 from typing import Optional, Type, List
 import sys
 
@@ -264,23 +265,44 @@ class QdrantDB(VectorDB):
                 sys.exit(1)
 
         except Exception as e:
-            print(f"Exception encountered: {e}")
+            print(f"Exception encountered while getting vectorizer: {e}")
             sys.exit(1)
 
-    def compute_doc_hash(self, file_path: pathlib.Path) -> str:
-        """Compute a SHA-256 hash of the entire file contents."""
+    def compute_doc_hash(self, doc_path: pathlib.Path) -> str:
+        """
+            This is complicated, I know. But basically, we have a situation
+            where when we have a single file, we want to create a hash from
+            the contents of that single file. But when we have a directory
+            with multiple files/directories in it, we want to create a
+            unique hash somehow. I've opted to just take the files in the
+            provided path, sort them, and read them into memory in 64KB
+            chunks one after another and generate a hash of each chunk.
+        """
 
-        try:
-            sha = hashlib.sha256()
-            with open(file_path, 'rb') as f:
-                chunk_size: int = 65536  # 64KB chunks
-                # Read in chunks, handles large files w/out using too much mem
+        # Populated depending on whether doc_path is a dir or a file
+        file_list = []
+        if os.path.isdir(doc_path):
+            # Get all file names in the directory, ignoring subdirectories
+            child_files = [
+                f for f in os.listdir(doc_path)
+                if os.path.isfile(os.path.join(doc_path, f))
+            ]
+
+            # Sort files alphabetically
+            child_files.sort()
+            file_list += child_files
+        else:
+            file_list += [doc_path]
+
+        chunk_size: int = 65536  # 64KB chunks
+        sha = hashlib.sha256()
+        for file_name in file_list:
+            file_path = os.path.join(doc_path, file_name)
+            with open(file_path, "rb") as f:
                 while True:
                     data = f.read(chunk_size)
                     if not data:
                         break
                     sha.update(data)
-            return sha.hexdigest()
-        except Exception as e:
-            print(f"Exception encountered: {e}")
-            sys.exit(1)
+
+        return sha.hexdigest()

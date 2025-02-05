@@ -139,7 +139,7 @@ def load_config(config_path: pathlib.Path) -> dict:
 
     try:
         validate(instance=config, schema=CONFIG_SCHEMA)
-        print("✅ Config is valid!")
+        # print("✅ Config is valid!")
         return config
     except ValidationError as e:
         print(f"❌ Config validation failed: {e.message}")

@@ -18,7 +18,8 @@ dependencies = [
     "jsonschema (>=4.23.0,<5.0.0)",
     "pymupdf4llm (>=0.0.17,<0.0.18)",
     "sentence-transformers (>=3.4.1,<4.0.0)",
-    "qdrant-client (>=1.13.2,<2.0.0)"
+    "qdrant-client (>=1.13.2,<2.0.0)",
+    "pypandoc-binary (>=1.15,<2.0)"
 ]
 
 [tool.poetry.scripts]
