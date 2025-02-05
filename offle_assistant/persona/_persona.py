@@ -5,7 +5,11 @@ from typing import Union, Generator, List, Optional
 import yaml
 import sys
 
-from offle_assistant.vector_db import VectorDB, DbReturnObj
+from offle_assistant.vector_db import (
+    VectorDB,
+    DbReturnObj,
+    EmptyDbReturn
+)
 from offle_assistant.vectorizer import Vectorizer
 
 
@@ -106,20 +110,23 @@ class Persona:
     ) -> Union[str, Generator[str, None, None]]:
 
         rag_prompt = ""
-        rag_response = None
+        rag_response: DbReturnObj = EmptyDbReturn()
         if perform_rag is True:
             if self.vector_db is None:
                 print("Cannot perform RAG without a vectorDB.")
-                sys.exit(1)
+            elif len(self.db_collections) <= 0:
+                print("Cannot perform RAG without a specified collection.")
+            else:
+                rag_response: Optional[DbReturnObj] = (
+                    self.retrieve_context_doc(
+                        query_string=user_response,
+                        collection_name=self.db_collections[0]
+                    )
+                )
 
-            rag_response: Optional[DbReturnObj] = self.retrieve_context_doc(
-                query_string=user_response,
-                collection_name=self.db_collections[0]
-            )
-
-            rag_prompt += self.get_RAG_prompt(
-                RAG_hit=rag_response,
-            )
+                rag_prompt += self.get_RAG_prompt(
+                    RAG_hit=rag_response,
+                )
 
         user_message = {
             "role": "user",

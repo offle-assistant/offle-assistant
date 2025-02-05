@@ -225,7 +225,7 @@ some sort of text-based description of the image could be really important. In t
 read the figure and create a textual description of the table and have this be the embedding. And then we store the path to the table in the metadata
 for the PointStruct. If we get a hit, we return the textual original figure as well as some surrounding text.
 
-### Switch out jsonSchema for Pydantic
+### Switch out jsonSchema for Pydantic (COMPLETE)
     Pydantic is just way more legible
 
 ### Seriously consider switch ollama python api out for openai api
