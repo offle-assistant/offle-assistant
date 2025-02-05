@@ -1,5 +1,6 @@
 import hashlib
 import pathlib
+import os
 from typing import Optional, Type, List
 import sys
 
@@ -22,7 +23,13 @@ from offle_assistant.vectorizer import (
     SentenceTransformerVectorizer,
     vectorizer_lookup_table
 )
-from ._vector_db import VectorDB, DbReturnObj
+from ._vector_db import (
+    VectorDB, DbReturnObj, EmptyDbReturn
+)
+from offle_assistant.vector_math import (
+    cosine_similarity,
+    euclidean_distance
+)
 
 
 class QdrantDB(VectorDB):
@@ -90,26 +97,56 @@ class QdrantDB(VectorDB):
         self,
         collection_name: str,
         query_vector: np.array,
+        score_threshold: Optional[float] = None
     ) -> Optional[DbReturnObj]:
+        """
+
+            The score_threshold is directly affected by which metric for
+            searching the Database we're using. For example, if we're using
+            cosine similarity, hits with lower scores than this threshold
+            will be excluded. If we're using euclidean distance, scores
+            higher than this threshold will be excluded. As such, this
+            score can severely break things if not set appropriately by
+            the code calling this. I've set it to default at None because
+            if you're using this method on a database that uses a distance
+            metric and this defaults to something sane for cosine similarity
+            like .7 or .8, it will potentially omit results that could be
+            useful without your knowledge. And vice versa if I set it to
+            something sane for distance.
+
+            https://qdrant.tech/documentation/concepts/search/
+
+        """
+
         search_params = SearchParams(hnsw_ef=512)
         search_results = self.client.search(
             collection_name=collection_name,
             query_vector=query_vector,
+            with_vectors=True,
             limit=1,
             search_params=search_params,
-            # score_threshold=.8  # only obtain results better than this
+            score_threshold=score_threshold  # by cosine similarity
         )
+
+        if len(search_results) <= 0:
+            return EmptyDbReturn()
 
         hit: PointStruct = search_results[0]
 
         file_name: pathlib.Path = hit.payload["file_name"]
         doc_path: pathlib.Path = hit.payload["doc_path"]
         hit_text: str = hit.payload["embedded_text"]
+        hit_vector: np.array = np.array(hit.vector)
+        euclidean_dist = euclidean_distance(query_vector, hit_vector)
+        cosine_sim = cosine_similarity(query_vector, hit_vector)
 
         db_return_obj: DbReturnObj = DbReturnObj(
             file_name=file_name,
             doc_path=doc_path,
-            document_string=hit_text
+            document_string=hit_text,
+            euclidean_distance=euclidean_dist,
+            cosine_similarity=cosine_sim,
+            success=True
         )
 
         return db_return_obj
@@ -264,23 +301,44 @@ class QdrantDB(VectorDB):
                 sys.exit(1)
 
         except Exception as e:
-            print(f"Exception encountered: {e}")
+            print(f"Exception encountered while getting vectorizer: {e}")
             sys.exit(1)
 
-    def compute_doc_hash(self, file_path: pathlib.Path) -> str:
-        """Compute a SHA-256 hash of the entire file contents."""
+    def compute_doc_hash(self, doc_path: pathlib.Path) -> str:
+        """
+            This is complicated, I know. But basically, we have a situation
+            where when we have a single file, we want to create a hash from
+            the contents of that single file. But when we have a directory
+            with multiple files/directories in it, we want to create a
+            unique hash somehow. I've opted to just take the files in the
+            provided path, sort them, and read them into memory in 64KB
+            chunks one after another and generate a hash of each chunk.
+        """
 
-        try:
-            sha = hashlib.sha256()
-            with open(file_path, 'rb') as f:
-                chunk_size: int = 65536  # 64KB chunks
-                # Read in chunks, handles large files w/out using too much mem
+        # Populated depending on whether doc_path is a dir or a file
+        file_list = []
+        if os.path.isdir(doc_path):
+            # Get all file names in the directory, ignoring subdirectories
+            child_files = [
+                f for f in os.listdir(doc_path)
+                if os.path.isfile(os.path.join(doc_path, f))
+            ]
+
+            # Sort files alphabetically
+            child_files.sort()
+            file_list += child_files
+        else:
+            file_list += [doc_path]
+
+        chunk_size: int = 65536  # 64KB chunks
+        sha = hashlib.sha256()
+        for file_name in file_list:
+            file_path = os.path.join(doc_path, file_name)
+            with open(file_path, "rb") as f:
                 while True:
                     data = f.read(chunk_size)
                     if not data:
                         break
                     sha.update(data)
-            return sha.hexdigest()
-        except Exception as e:
-            print(f"Exception encountered: {e}")
-            sys.exit(1)
+
+        return sha.hexdigest()

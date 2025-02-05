@@ -13,21 +13,39 @@ class DbReturnObj:
         file_name: str,
         doc_path: pathlib.Path,
         document_string: str,
+        euclidean_distance: float,
+        cosine_similarity: float,
+        success: bool = True
     ):
-        self.file_name = file_name
-        self.doc_path = doc_path
-        self.document_string = document_string
+        self.file_name: str = file_name
+        self.doc_path: pathlib.Path = doc_path
+        self.document_string: str = document_string
+        self.euclidean_distance: float = euclidean_distance
+        self.cosine_similarity: float = cosine_similarity
+        self.success = success
 
-    def get_prompt_string(self) -> str:
-        rag_prompt = ""
+    def get_hit_text(self) -> str:
+        """
 
-        rag_prompt += (
-            "Given the following context, answer the user's query:\n\n"
-        )
-        rag_prompt += (
-            f"Context: {self.document_string}"
-        )
-        return rag_prompt
+        All this is going to do is return the text to the document.
+        For certain kinds of text, it may be necessary to do some
+        clean up. So it's better to have a getter like this.
+
+        """
+        return self.document_string
+
+    def get_hit_success(self):
+        return self.success
+
+
+class EmptyDbReturn(DbReturnObj):
+    def __init__(self):
+        self.file_name: str = ""
+        self.doc_path: pathlib.Path = pathlib.Path("")
+        self.document_string: str = ""
+        self.euclidean_distance: float = 0
+        self.cosine_similarity: float = 0
+        self.success = False
 
 
 class VectorDB(ABC):

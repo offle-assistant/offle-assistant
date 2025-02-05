@@ -81,13 +81,18 @@ def chat_command(
                 perform_rag=args.rag
             )
             rag_response: DbReturnObj = chat_response.rag_response
-            if rag_response is not None:
-                rag_string = rag_response.get_prompt_string()
+            if rag_response.get_hit_success():
                 fprint("RAG prompt given to LLM: ")
                 fprint("---" * 10)
-                fprint(rag_string)
+                fprint(persona.get_RAG_prompt(rag_response))
                 fprint("---" * 10)
                 fprint("End prompt")
+                fprint(
+                    f"Distance from query: {rag_response.euclidean_distance}"
+                )
+                fprint(
+                    f"Cosine Similarity: {rag_response.cosine_similarity}"
+                )
                 fprint(f"Document path: {rag_response.doc_path}")
                 fprint("\n")
 
