@@ -179,7 +179,6 @@ class Persona:
             query_vector=query_vector,
             score_threshold=self.query_threshold
         )
-
         return db_return_obj
 
     def serialize(self):

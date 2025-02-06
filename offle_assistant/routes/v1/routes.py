@@ -47,6 +47,9 @@ async def chat_endpoint(
         vector_db=vector_db
     )
     response_text = chat_response.chat_response
-    response_text = "hey"
+
     print(response_text)
+
+    SessionManager.save_persona(chat.user_id, persona)
+
     return {"response": response_text}

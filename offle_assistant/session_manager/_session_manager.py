@@ -22,13 +22,9 @@ class SessionManager:
         # If persona doesn't exist, create a new one
         new_persona: Persona = Persona(
             persona_id=persona_id,
-            name=persona_config.name,
-            description=persona_config.description,
-            db_collections=persona_config.rag.collections,
-            system_prompt=persona_config.system_prompt,
-            model=persona_config.model,
-            temperature=persona_config.temperature
+            config=persona_config
         )
+
         redis_client.set(persona_key, new_persona.serialize(), ex=3600)  # 1hr
         return new_persona
 

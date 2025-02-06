@@ -61,6 +61,7 @@ class RAGConfig(StrictBaseModel):
 
 
 class PersonaConfig(StrictBaseModel):
+    persona_id: str = ""  # used for session management
     name: str = "Offie"
     model: str = "llama3.2"
     system_prompt: str = "You are a helpful assistant."
