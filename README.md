@@ -3,8 +3,8 @@ This is a self-hosted cli LLM framework.
 
 ## CLI Interface:
 
-poetry run python assistant/main.py chat --persona Ralph
-poetry run python assistant/main.py persona --list
+poetry run offle\_assistant\_cli chat Ralph --rag
+poetry run offle\_assistant\_cli rag --add /path/to/doc.tex -c "new-collection"
 
 ## To-do:
 ### Config file for stylization, model selection (COMPLETED)
@@ -175,7 +175,21 @@ Create RAG options dict/struct so that we can set things like threshold, num of 
     Pydantic is just way more legible
 
 ### Create a web server with a basic rest api
-I just need a small rest API running on fastAPI.
+built with fastAPI 
+
+I'm seeing a few problems right off the bat.
+I need the bots to stick around. This is possible with a cache in a dictionary. Not a huge deal.
+But how do I load a chatbot when it's requested? I think it's gotta be by passing a dictionary with all
+the configuration options. Also not a huge, huge deal. What I can do here is have the config.yaml file
+be read into the UI. Maybe I require that every PersonaConfig be there, llmserver and vectordb server.
+They can be autofilled in the UI. Totally fine.
+
+There's a weird issue with the PersonaConfig right now, I have two objects called PersonaConfig oops lol.
+I should really have the persona object take a PersonaConfig as its only parameter. And it can handle
+setting all of its internal parameters accordingly. So it should just be one big dictionary essentially.
+
+### Write a test framework
+something robust!!
 
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.

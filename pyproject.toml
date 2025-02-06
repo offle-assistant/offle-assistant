@@ -18,10 +18,13 @@ dependencies = [
     "qdrant-client (>=1.13.2,<2.0.0)",
     "pypandoc-binary (>=1.15,<2.0)",
     "pydantic (>=2.10.6,<3.0.0)",
+    "fastapi (>=0.115.8,<0.116.0)",
+    "uvicorn (>=0.34.0,<0.35.0)",
 ]
 
 [tool.poetry.scripts]
-offle_assistant = "offle_assistant.main:main"
+offle_assistant = "offle_assistant.main:start"
+offle_assistant_cli = "offle_assistant.cli._cli:main"
 
 
 

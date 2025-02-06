@@ -152,3 +152,12 @@ class CLI:
             args=self.args,
             config=self.config,
         )
+
+
+def main():
+    cli = CLI()
+    cli.run()
+
+
+if __name__ == "__main__":
+    main()
