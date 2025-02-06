@@ -188,6 +188,13 @@ There's a weird issue with the PersonaConfig right now, I have two objects calle
 I should really have the persona object take a PersonaConfig as its only parameter. And it can handle
 setting all of its internal parameters accordingly. So it should just be one big dictionary essentially.
 
+### I need to do a big refactor to get the rest api to work. (COMPLETE)
+This mainly came down to my lack of understanding of pydantic. It's pretty sick actually. Really nifty.
+
+### refactor llm server 
+I need to turn it into its own class so that I can interface with it like I do with the vectordb
+This is the solution for providing openAI and ollama and whoever else.
+
 ### Write a test framework
 something robust!!
 

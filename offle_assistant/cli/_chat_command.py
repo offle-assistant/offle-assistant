@@ -6,7 +6,7 @@ from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import Validator, ValidationError
 
 from offle_assistant.persona import Persona, PersonaChatResponse
-from offle_assistant.config import Config, PersonaConfig
+from offle_assistant.config import OffleConfig, PersonaConfig
 from offle_assistant.vector_db import (
     QdrantDB,
     VectorDB,
@@ -16,12 +16,12 @@ from offle_assistant.vector_db import (
 
 def chat_command(
     args,
-    config: Config
+    config: OffleConfig
 ):
 
     # persona_id is often, but not necessarily, the persona's name.
     persona_id = args.persona
-    persona_dict = config.persona_dict
+    persona_dict = config.personas
     selected_persona: PersonaConfig = persona_dict[persona_id]
 
     qdrant_db: VectorDB = QdrantDB(
@@ -43,13 +43,13 @@ def chat_command(
 
     while True:
         user_prompt = FormattedText([
-            (f"fg:{config.global_user_color} bold", "User: ")
+            (f"fg:{config.settings.formatting.user_color} bold", "User: ")
         ])
         user_response = prompt(user_prompt, validator=NonEmptyValidator())
 
         ralph_prompt = FormattedText([
             (
-                f"fg:{config.global_persona_color} bold",
+                f"fg:{config.settings.formatting.persona_color} bold",
                 f"{persona.name}: "
             )
         ])

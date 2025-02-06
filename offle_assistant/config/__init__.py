@@ -1,6 +1,11 @@
-from ._config import Config, PersonaConfig
+from ._config import (
+    load_config,
+    OffleConfig,
+    PersonaConfig
+)
 
 __all__ = [
-    "Config",
+    "OffleConfig",
     "PersonaConfig",
+    "load_config"
 ]

@@ -2,13 +2,13 @@ import pathlib
 
 from prompt_toolkit import print_formatted_text as fprint
 
-from offle_assistant.config import Config, PersonaConfig
+from offle_assistant.config import OffleConfig, PersonaConfig
 from offle_assistant.vector_db import QdrantDB
 
 
 def rag_command(
     args,
-    config: Config
+    config: OffleConfig
 ):
     qdrant_db = QdrantDB()
     if args.add is not None:

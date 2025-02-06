@@ -1,5 +1,5 @@
 import pathlib
-from typing import Dict, Optional, List
+from typing import Dict, List
 import sys
 
 # from jsonschema import validate, ValidationError
@@ -75,68 +75,6 @@ class PersonaConfig(StrictBaseModel):
 class OffleConfig(StrictBaseModel):
     personas: Dict[str, PersonaConfig]
     settings: SettingsConfig = SettingsConfig()
-
-
-class Config:
-    def __init__(self, config_path: pathlib.Path):
-
-        config: OffleConfig = load_config(config_path)
-        self.global_user_color = config.settings.formatting.user_color
-        self.global_persona_color = config.settings.formatting.persona_color
-
-        self.llm_server_hostname = config.settings.llm_server.hostname
-        self.llm_server_port = config.settings.llm_server.port
-
-        self.vector_db_server_hostname = (
-            config.settings.vector_db_server.hostname
-        )
-        self.vector_db_server_port = config.settings.vector_db_server.port
-
-        self.persona_dict = {}
-        for persona_id in config.personas.keys():
-            current_persona = config.personas[persona_id]
-            name = current_persona.name
-            description = current_persona.description
-            system_prompt = current_persona.system_prompt
-            model = current_persona.model
-            db_collections = current_persona.rag.collections
-
-            llm_server_hostname = (
-                current_persona.llm_server.hostname
-            )
-            llm_server_port = current_persona.llm_server.port
-            # vector_db_server_hostname = (
-            #     current_persona.vector_db_server.hostname
-            # )
-            # vector_db_server_port = (
-            #     current_persona.vector_db_server.port
-            # )
-
-            llm_server = LLMServerConfig(
-                hostname=llm_server_hostname,
-                port=llm_server_port
-            )
-
-            vector_db_server = VectorDbServerConfig(
-                hostname=self.vector_db_server_hostname,
-                port=self.vector_db_server_port
-            )
-
-            rag = RAGConfig(
-                collections=db_collections
-            )
-
-            persona_config = PersonaConfig(
-                name=name,
-                model=model,
-                system_prompt=system_prompt,
-                description=description,
-                llm_server=llm_server,
-                rag=rag,
-                vector_db_server=vector_db_server,
-            )
-
-            self.persona_dict[persona_id] = persona_config
 
 
 def load_config(config_path: pathlib.Path) -> OffleConfig:
