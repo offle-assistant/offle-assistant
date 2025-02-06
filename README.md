@@ -174,11 +174,75 @@ Create RAG options dict/struct so that we can set things like threshold, num of 
 ### Switch out jsonSchema for Pydantic (COMPLETE)
     Pydantic is just way more legible
 
-### Create a web server with a basic rest api
-built with fastAPI 
+### Create a web server with a basic rest api (COMPLETE)
+built with fastAPI. Just to test out a bit of its functionality
 
-I need to actually plan this out instead of just throwing code at it. What do I need?
 
+### I need to do a big refactor to get the rest api to work. (COMPLETE)
+This mainly came down to my lack of understanding of pydantic. It's pretty sick actually. Really nifty.
+A few key changes made the whole system of passing data way easier and safer.
+
+
+### I need to make some design decisions
+
+HPC/CLI
+    main benefit of this I see is that the LLM server can run in one central location.
+    sys admin runs the LLM server 24/7
+    users have a docker container they can use to start the vector db and access cli
+    A user has config in their home directory.
+    Can add documents via command line.
+    Users need to use their config file to point the client to the correct LLM server.
+    Because a user might be on multiple projects, we may need a way of putting a persona
+    in a group. This way, that persona can point to a specific vector db.
+    This is just going to be a bit tricky for users unfortunately ://
+
+HPC/OOD
+    When a user wants an LLM session:
+        the GPU node is allocated, llm server is spun up
+        your available vector dbs are spun up
+    in the web interface, you can select different collections/vector dbs
+        but this is done with a gui and names, not with hostnames and ports
+        though of course, behind the scenes, this is how its done.
+    You can chat, add docs, etc
+    User configuration is stored in home directory, but what's necessary here?
+        personas
+        conversation history
+        As far as general settings go, I need log files? convo history location for sure
+    
+Business/Web Interface
+    config files in the home directory don't really work here unfortunately :/
+        I just need a sql database for the personas.
+    So....
+    someone from devops sets this up for their business.
+        all local:
+            docker-compose will do the following
+                stand up an ollama container
+                    starts ollama 
+                stand up a qdrant container  # authentication can be done per-collection
+                    starts qdrant
+                stand up an offle-assistant container
+                    likely, sysadmin will want to set some things like port it's listening on
+                    starts offle-assistant fastapi server
+                    starts sql database server
+
+            sys admin sets up a reverse proxy on their system to direct traffic to a specific company
+                owned url to go to the offle-assistant server once authentication has passed
+
+        all cloud:
+            a bit easier...
+                the process of spinning everything up can be uniform
+                web interface to start the services, get more storage/compute etc...
+                gives the admin a url to give to employees
+                there should be two interfaces for a company
+                    admin
+                        can create collections for anyone
+                    employee
+                        can create personal/group collections
+             
+
+
+
+### Build out the production REST api
 Sending data
     send a message to a specific bot and get a response
         This requires loading the PersonaConfig
@@ -202,77 +266,230 @@ Recieving data
 
 persona\_cache = {
     "persona": {
-        "persona\_id": "ralph",
+        "persona\_id": "p9823lfhap98h21n",  \# hash, primary key for sql database persona schema
         "timestamp": 123112421412  # so the oldest one can go when needed
     }
 }
 
+a few realizations:
+    * vector db shouldn't be part of the persona. There's no reason to have multiple databases here.
+    The vector db and the collection name(s) should be provided to the request for chat.
+    in other words, there should be a rag payload like (vectordb, collection\_list)
+    and the vectordb lives as a global variable that is created when the server is spun up and kept
+    around to be passed into the chat request method on the persona when it comes time to make a query.
+    This will honestly work with the cli version of this app as well. When you start a chat, you spin
+    up the server. I just need to make minor modifications to the Persona Class. I should make the
+    LLM server modifications at the same time. Specifically, taking "hostname/port" out of the constructor
+    and replacing it with the server client itself.
+    * Creating a wrapper for the LLM client is going to be 100% necessary in order to support multiple
+    LLM clients. I should really make this change immediately so that I can work this into the rest api.
+    How do I pick the client? It's based on the model choice, right? In the future, when I add a new model
+    how do I want to update the code to account for this? I want to change it in 1 place only. 
+    If I do create a set of client classes, when the REST server is started, I can "start" all of the client.
+    What that really means is creating all of the client classes. Then, I can use a method on there to get
+    a list of all available models. What this will mean for OpenAI is querying the OpenAI client to see which
+    models your API key gives you access to (this may be user-based so I may have to do it for each user when 
+    they start their connection). For ollama, it means running 'ollama ls'. So any model you have already pulled
+    is accessible. Which ollama models are accessible on a locally run system should be administered by the sys
+    admin because they might not want people running models bigger than they can actually run on their system.
+    So we can use these values to populate a dictionary of lists, key is the api, list is the models available.
+    So the models in the web ui will be populated by this dictionary, and then when the user requests use of
+    a specific model, we look in the dictionary to see which key contains that model, and we use that model
+    string with the appropriate client object to update the client object and then provide it to the persona.
+    This object needs to be different from how the qdrant server is designed. This should really be more of a
+    model factory object. It has global state information such as the hostname/port/available models but when
+    the Persona uses it, they use it to spawn a model object which it can use to interface with the client
+    Wait.. So what I have right now is actually really close. The individual personas don't need to have a model
+    in their constructor. They SHOULDN'T, what we need to do is have the model as part of the chat method. This
+    way, users can change model mid-conversation. It also works way better with the flow. In fact, there's
+    absolutely no reason why a Persona should even be locked to an API. The only thing the persona constructor
+    really needs is a system prompt, collections, name, description, and persona\_id.
+    * With my current approach, every user is going to be hitting the same global variables. This isn't good.
+    I think redis is going to be my best approach here but I need to research it a bit more.
+
+
+What will this mean for the cli program and config files?
+It means that all server configs will be in settings. That's honestly it I believe.
+
+Persona Refactor:
+constructor(name, description, model, system\_prompt, rag\_prompt)
+    \# importantly, here model isn't used in the constructor to
+    \# set anything aside form the self.model property.
+    \# This can be changed when in a conversation. 
+chat(msg, client)
+    ChatResponse = client.chat(msg, self.model, stream)
+get\_config() -> PersonaConfig:
+    \# used when it's time to save a PersonaConfig to the sql db
+
+PersonaConfig: This is used to populate the sql database and to load a Persona.
+
+
+LLMClient:
+chat(model, message\_chain, stream):
+    \# Behind the scenes, this will look up which API the model belongs to
+    \# and call the appropriate chat method: ollama\_chat(args), openai\_chat(args), etc
+get\_model\_dict():
+    \# {'open-ai': ['gpt4o', 'gpt4o3-mini'], "ollama": ["llama3.2", "llama3.1"]}  \# include tags
+    \# This will be used internally to call the appropriate chat method.
+    \# This will also be called by the rest api to send a list of models/apis to
+    \# the web client. Eventually, the list will be determined by an API key for chatgpt models
 
 
 Functions I need:
+    All of these are going to require the user\_id to be sent in from the client
+    so that the proper session info can be loaded from the redis cache.
 
-send\_message(persona\_id, msg) -> PersonaChatResponse:
-    # Check if persona\_id is in cache
-    # if not, load persona
-    # send a message and wait for reply.
-    # The PersonaChatResponse object needs to keep the
-    # doc\_id and some other stuff around about the
-    # RAG document.
+save\_persona(PersonaConfig) -> OK:
+    \# This puts a new persona into the sql db
+    \# Not necessarily called every time someone starts a conversation
+    \# A conversation can be started with a new PersonaConfig before it
+    \# gets saved
 
 load\_persona(persona\_id) -> OK:
-    # The config lives on the host system, right? 
-    # So we can look up the PersonaConfig by persona\_id
+    \# This puts current persona into the cache
+    \# and then loads the persona from the sql db
+    \# and stores it in a global variable.
 
-save\_persona(persona\_id, PersonaConfig) -> OK:
-    # When we make changes to the persona in the browser,
-    # we've gotta save the changes on the server.
+send\_message(msg, rag\_payload: Optional[RagPayload]) -> PersonaChatResponse:
+    \# Sends a message to the currently loaded persona.
 
-load\_settings(): -> OK:
-    # Again, config lives on system.
+update\_persona(persona\_id, PersonaConfig) -> OK:
+    \# This updates an existing entry in the Persona sql db
 
-save\_settings(SettingsConfig): -> OK:
-    # When the user makes settings changes in browser
-    # these values must be saved in the server config
+update\_conversing\_persona(PersonaConfig) -> OK:
+    \# This is going to call the same function update\_persona()
+    \# uses to update the entry in the database, but it also
+    \# reloads the persona that you're conversing with.
 
-upload\_document(document\_file) -> converted\_file:
-    # This is just the upload step. Both images will be
-    # displayed side-by-side
+upload\_document(document\_file) -> converted\_doc:
+    \# this should take a doc, convert it into markdown and show
+    \# it to the user. Both docs side-by-side
+    \# It is likely a good idea to have a markdown editor 
+    \# in this view. So that users can clean up their
+    \# documents before sending it off to be stored.
 
-save\_document\_to\_collection(converted\_doc, collection\_name) -> OK:
-    # Not sure how this is going to work on the back end yet.
-    # Probably, the chunking will happen on the back end after
-    # the save button has been pushed.
+save\_document(converted\_doc, collection\_name) -> OK:
+    \# after cleaning up the document and marking
+    \# the chunks, send it off to be saved.
 
-download\_document(doc\_id) -> file:
-    # When you get a doc hit on RAG, you should have the option
-    # to redownload the doc. The client will have get doc\_id
-    # So it will be trivial to find it to download.
+add\_collection(collection\_name, password) -> OK:
+    \# Users can add their own collections here behind
+    \# their user password.
+    \# Before I touch this, I need to better research how 
+    \# qdrant authentications work.
+    \# This function will likely change a lot
 
+
+    Example from 4o on managing global state with FastAPI
+    ```
+    from fastapi import FastAPI
+    import uvicorn
+
+    app = FastAPI()
+
+    # Global configuration (shared by all users)
+    app.state.llm_server = {
+        "hostname": "localhost",
+        "port": "11434"
+    }
+
+    app.state.vector_db = {
+        "hostname": "localhost",
+        "port": "6333"
+    }
+
+    if __name__ == "__main__":
+        uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+
+    ```
+
+    ```
+    from fastapi import APIRouter, Request
+
+    router = APIRouter()
+
+    @router.get("/llm-server")
+    async def get_llm_server(request: Request):
+        return {"llm_server": request.app.state.llm_server}
+
+    ```
 
 User Interface Funcitonality:
+
+Persona Select Window (Landing page)
+    New Persona -> opens a default Persona Configuration window
+
+Persona Configuration Window
+    Change name
+    Change model
+    Change system Prompt
+    Change RAG prompt
+    Change available collections
+    [Start Chat Button]  [Save Persona Button]
 
 Chat Window
     When there's a RAG hit, I want the markdown displayed in markdown nice and pretty.
     I also want a download button for the original RAG doc.
-    I want a copy button
+    [Download Document Button]
     I want code to be properly displayed with syntax highlighting
+    [Copy output Button]
     Scrollbox for AI's text
+    A dropdown to change the model. This should have an "update persona" button to save
+    [Update Persona Button]
+    the model selection to the configuration.
 
 Settings Window
     Change some file locations?
 
-Persona Configuration Window
-    Change system Prompt
-    Change RAG prompt
-    Change server endpoints
 
 
 
 
+vvvvv First draft of rest api plan vvvvv
+send\_message(persona\_id, msg) -> PersonaChatResponse:
+    \# Check if persona\_id is in cache
+    \# if not, load persona
+    \# send a message and wait for reply.
+    \# The PersonaChatResponse object needs to keep the
+    \# doc\_id and some other stuff around about the
+    \# RAG document.
+
+load\_persona(persona\_id) -> OK:
+    \# The config lives on the host system, right? 
+    \# So we can look up the PersonaConfig by persona\_id
+
+save\_persona(persona\_id, PersonaConfig) -> OK:
+    \# When we make changes to the persona in the browser,
+    \# we've gotta save the changes on the server.
+
+load\_settings(): -> OK:
+    \# Again, config lives on system.
+
+save\_settings(SettingsConfig): -> OK:
+    \# When the user makes settings changes in browser
+    \# these values must be saved in the server config
+
+upload\_document(document\_file) -> converted\_file:
+    \# This is just the upload step. Both images will be
+    \# displayed side-by-side
+
+save\_document\_to\_collection(converted\_doc, collection\_name) -> OK:
+    \# Not sure how this is going to work on the back end yet.
+    \# Probably, the chunking will happen on the back end after
+    \# the save button has been pushed.
+
+download\_document(doc\_id) -> file:
+    \# When you get a doc hit on RAG, you should have the option
+    \# to redownload the doc. The client will have get doc\_id
+    \# So it will be trivial to find it to download.
+
+add\_collection(collection\_name, collection\_description, vectorizer) -> OK:
+    \# Users may need to add collections sometimes.
+
+^^^^^^ First draft of rest api plan ^^^^^^
 
 
-### I need to do a big refactor to get the rest api to work. (COMPLETE)
-This mainly came down to my lack of understanding of pydantic. It's pretty sick actually. Really nifty.
+
 
 ### refactor llm server 
 I need to turn it into its own class so that I can interface with it like I do with the vectordb

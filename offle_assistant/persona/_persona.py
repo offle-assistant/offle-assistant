@@ -1,16 +1,16 @@
-import ollama
-from ollama import ChatResponse
 import pathlib
 from typing import Union, Generator, List, Optional
 import yaml
 import sys
 
+from offle_assistant.config import PersonaConfig, RAGConfig
 from offle_assistant.vector_db import (
     VectorDB,
     DbReturnObj,
     EmptyDbReturn
 )
 from offle_assistant.vectorizer import Vectorizer
+from offle_assistant.llm_client import LLMClient
 
 
 class Persona:
@@ -31,35 +31,25 @@ class Persona:
         self,
         persona_id: str,
         name: str,
+        model: str,
         description: str,
         system_prompt: str,
+        temperature: float,
         db_collections: List[str],
-        model: str,
+        llm_client: LLMClient,
         vector_db: Optional[VectorDB] = None,
         query_threshold: Optional[float] = None,
-        llm_server_hostname: str = 'localhost',
-        llm_server_port: int = 11434,
     ):
         self.persona_id: str = persona_id
         self.name: str = name
-        self.description: str = description
-        self.db_collections: List[str] = db_collections
-        self.system_prompt: str = f"Your name is {self.name}. " + system_prompt
         self.model: str = model
+        self.description: str = description
+        self.system_prompt: str = f"Your name is {self.name}. " + system_prompt
+        self.temperature: float = temperature
+        self.db_collections: List[str] = db_collections
         self.vector_db = vector_db
-        self.llm_server_hostname: str = llm_server_hostname
-        self.llm_server_port: int = llm_server_port
+        self.llm_client = llm_client
         self.query_threshold: Optional[float] = query_threshold
-
-        # This handles providing a server ip/port
-        try:
-            server_url = (
-                f'http://{self.llm_server_hostname}:{self.llm_server_port}'
-            )
-            self.chat_client = ollama.Client(server_url)
-        except Exception as e:
-            print(f"An exception occurred while connecting to llm server: {e}")
-            sys.exit(1)
 
         self.system_prompt_message = {
             "role": "system",
@@ -106,7 +96,8 @@ class Persona:
         self,
         user_response,
         stream: bool = False,
-        perform_rag: bool = False
+        perform_rag: bool = False,
+        api_string: str = "ollama"
     ) -> Union[str, Generator[str, None, None]]:
 
         rag_prompt = ""
@@ -135,21 +126,20 @@ class Persona:
         self.message_chain.append(self.system_prompt_message)
         self.message_chain.append(user_message)
 
-        chat_response: ChatResponse = self.chat_client.chat(
-            model=self.model,
-            messages=self.message_chain,
-            stream=stream,
-            # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
-            options={
-                "temperature": self.temperature,
-            }
+        chat_response: Union[str, Generator[str, None, None]] = (
+            self.llm_client.chat(
+                model=self.model,
+                message_chain=self.message_chain,
+                stream=stream,
+                api_string=api_string
+            )
         )
 
         if stream is True:
             def response_generator():
                 response_text = ""
                 for chunk in chat_response:
-                    chunk_content = chunk['message']['content']
+                    chunk_content = chunk
                     yield chunk_content
                     response_text += chunk_content
 
@@ -166,7 +156,7 @@ class Persona:
 
             return persona_chat_response
         else:
-            response_text = chat_response['message']['content']
+            response_text = chat_response
             chat_message = {
                 "role": "assistant",
                 "content": response_text
@@ -202,6 +192,22 @@ class Persona:
         )
         return vectorizer
 
+    # def get_config(self):
+    #     rag_config: RAGConfig = RAGConfig(
+    #         collections=self.db_collections,
+    #         threshold=self.query_threshold
+    #             )
+    #     config: PersonaConfig = PersonaConfig(
+    #         name=self.name,
+    #         models=self.model,
+    #         system_prompt=self.system_prompt,
+    #         description=self.description,
+    #         temperature=self.temperature,
+    #         rag_config=rag_config
+    #     )
+
+    #     return config
+
 
 class PersonaChatResponse:
     def __init__(
@@ -209,7 +215,10 @@ class PersonaChatResponse:
         chat_response: Union[str, Generator[str, None, None]],
         rag_response: DbReturnObj,
     ):
-        self.chat_response: Union[str, Generator[str, None, None]] = chat_response
+        self.chat_response: Union[
+            str,
+            Generator[str, None, None]
+        ] = chat_response
         self.rag_response: DbReturnObj = rag_response
 
 

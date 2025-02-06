@@ -55,6 +55,7 @@ class SettingsConfig(StrictBaseModel):
 # ----- Persona-related Models -----
 class RAGConfig(StrictBaseModel):
     collections: List[str] = Field(default_factory=list)
+    threshold: float = 0
     # document: Optional[str] = None
     # related_docs: List[str] = Field(default_factory=list)
 
@@ -64,11 +65,8 @@ class PersonaConfig(StrictBaseModel):
     model: str = "llama3.2"
     system_prompt: str = "You are a helpful assistant."
     description: str = "This is the default chatbot."
-    llm_server: LLMServerConfig = LLMServerConfig()
-    vector_db_server: VectorDbServerConfig = VectorDbServerConfig()
+    temperature: float = 0.7
     rag: RAGConfig = RAGConfig()
-    # allowed_models: List[str] = Field(default_factory=list)
-    # temperature: float = 0.7
     # max_tokens: int = 4096
 
 
