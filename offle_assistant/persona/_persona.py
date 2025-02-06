@@ -1,7 +1,7 @@
 import pathlib
+import pickle
 from typing import Union, Generator, List, Optional
 import yaml
-import sys
 
 from offle_assistant.config import PersonaConfig, RAGConfig
 from offle_assistant.vector_db import (
@@ -30,26 +30,18 @@ class Persona:
     def __init__(
         self,
         persona_id: str,
-        name: str,
-        model: str,
-        description: str,
-        system_prompt: str,
-        temperature: float,
-        db_collections: List[str],
-        llm_client: LLMClient,
-        vector_db: Optional[VectorDB] = None,
-        query_threshold: Optional[float] = None,
+        config: PersonaConfig
     ):
         self.persona_id: str = persona_id
-        self.name: str = name
-        self.model: str = model
-        self.description: str = description
-        self.system_prompt: str = f"Your name is {self.name}. " + system_prompt
-        self.temperature: float = temperature
-        self.db_collections: List[str] = db_collections
-        self.vector_db = vector_db
-        self.llm_client = llm_client
-        self.query_threshold: Optional[float] = query_threshold
+        self.name: str = config.name
+        self.model: str = config.model
+        self.description: str = config.description
+        self.system_prompt: str = (
+            f"Your name is {self.name}. " + config.system_prompt
+        )
+        self.temperature: float = config.temperature
+        self.query_threshold: Optional[float] = config.rag.threshold
+        self.db_collections: List[str] = config.rag.collections
 
         self.system_prompt_message = {
             "role": "system",
@@ -95,15 +87,17 @@ class Persona:
     def chat(
         self,
         user_response,
+        llm_client: LLMClient,
+        vector_db: VectorDB,
         stream: bool = False,
         perform_rag: bool = False,
-        api_string: str = "ollama"
+        api_string: str = "ollama",
     ) -> Union[str, Generator[str, None, None]]:
 
         rag_prompt = ""
         rag_response: DbReturnObj = EmptyDbReturn()
         if perform_rag is True:
-            if self.vector_db is None:
+            if vector_db is None:
                 print("Cannot perform RAG without a vectorDB.")
             elif len(self.db_collections) <= 0:
                 print("Cannot perform RAG without a specified collection.")
@@ -111,7 +105,8 @@ class Persona:
                 rag_response: Optional[DbReturnObj] = (
                     self.retrieve_context_doc(
                         query_string=user_response,
-                        collection_name=self.db_collections[0]
+                        collection_name=self.db_collections[0],
+                        vector_db=vector_db
                     )
                 )
 
@@ -127,7 +122,7 @@ class Persona:
         self.message_chain.append(user_message)
 
         chat_response: Union[str, Generator[str, None, None]] = (
-            self.llm_client.chat(
+            llm_client.chat(
                 model=self.model,
                 message_chain=self.message_chain,
                 stream=stream,
@@ -172,13 +167,14 @@ class Persona:
     def retrieve_context_doc(
         self,
         query_string: str,
-        collection_name: str
+        collection_name: str,
+        vector_db: VectorDB
     ) -> DbReturnObj:
-        vectorizer: Vectorizer = self.get_vectorizer(
+        vectorizer: Vectorizer = vector_db.get_collection_vectorizer(
             self.db_collections[0]
         )
         query_vector = vectorizer.embed_sentence(query_string)
-        db_return_obj: DbReturnObj = self.vector_db.query_collection(
+        db_return_obj: DbReturnObj = vector_db.query_collection(
             collection_name=collection_name,
             query_vector=query_vector,
             score_threshold=self.query_threshold
@@ -186,11 +182,12 @@ class Persona:
 
         return db_return_obj
 
-    def get_vectorizer(self, collection_name: str) -> Vectorizer:
-        vectorizer: Vectorizer = self.vector_db.get_collection_vectorizer(
-            collection_name=collection_name
-        )
-        return vectorizer
+    def serialize(self):
+        return pickle.dumps(self)
+
+    @staticmethod
+    def deserialize(serialized_persona):
+        return pickle.loads(serialized_persona)
 
     # def get_config(self):
     #     rag_config: RAGConfig = RAGConfig(

@@ -23,7 +23,7 @@ def chat_command(
     # persona_id is often, but not necessarily, the persona's name.
     persona_id = args.persona
     persona_dict = config.personas
-    selected_persona: PersonaConfig = persona_dict[persona_id]
+    persona_config: PersonaConfig = persona_dict[persona_id]
 
     qdrant_db: VectorDB = QdrantDB(
         host=config.settings.vector_db_server.hostname,
@@ -40,14 +40,7 @@ def chat_command(
 
     persona: Persona = Persona(
         persona_id=persona_id,
-        name=selected_persona.name,
-        description=selected_persona.description,
-        db_collections=selected_persona.rag.collections,
-        vector_db=qdrant_db,
-        system_prompt=selected_persona.system_prompt,
-        model=selected_persona.model,
-        llm_client=llm_client,
-        temperature=selected_persona.temperature
+        config=persona_config
     )
 
     while True:
@@ -82,6 +75,9 @@ def chat_command(
             chat_response: PersonaChatResponse = persona.chat(
                 user_response=user_response,
                 stream=False,
+                perform_rag=args.rag,
+                vector_db=qdrant_db,
+                llm_client=llm_client,
             )
             response_text: str = chat_response.chat_response
             fprint(response_text)
@@ -92,7 +88,9 @@ def chat_command(
             chat_response: PersonaChatResponse = persona.chat(
                 user_response=user_response,
                 stream=True,
-                perform_rag=args.rag
+                perform_rag=args.rag,
+                vector_db=qdrant_db,
+                llm_client=llm_client,
             )
             rag_response: DbReturnObj = chat_response.rag_response
             if rag_response.get_hit_success():
