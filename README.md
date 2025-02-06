@@ -177,16 +177,99 @@ Create RAG options dict/struct so that we can set things like threshold, num of 
 ### Create a web server with a basic rest api
 built with fastAPI 
 
-I'm seeing a few problems right off the bat.
-I need the bots to stick around. This is possible with a cache in a dictionary. Not a huge deal.
-But how do I load a chatbot when it's requested? I think it's gotta be by passing a dictionary with all
-the configuration options. Also not a huge, huge deal. What I can do here is have the config.yaml file
-be read into the UI. Maybe I require that every PersonaConfig be there, llmserver and vectordb server.
-They can be autofilled in the UI. Totally fine.
+I need to actually plan this out instead of just throwing code at it. What do I need?
 
-There's a weird issue with the PersonaConfig right now, I have two objects called PersonaConfig oops lol.
-I should really have the persona object take a PersonaConfig as its only parameter. And it can handle
-setting all of its internal parameters accordingly. So it should just be one big dictionary essentially.
+Sending data
+    send a message to a specific bot and get a response
+        This requires loading the PersonaConfig
+
+    send a message to a different bot
+        This requires
+            loading a different PersonaConfig
+            saving message history
+                I think this gets saved locally in .config/offle-assistant/<bot-name>/
+                No need to send it to the client and then back, right? yes.
+
+    update the config for a bot (what happens to message history?)
+    load config for settings
+    add a rag document
+    view the document before/after markdown conversion
+
+Recieving data
+    request the config file on a user's system.
+    request message history
+    receive messages from bot
+
+persona\_cache = {
+    "persona": {
+        "persona\_id": "ralph",
+        "timestamp": 123112421412  # so the oldest one can go when needed
+    }
+}
+
+
+
+Functions I need:
+
+send\_message(persona\_id, msg) -> PersonaChatResponse:
+    # Check if persona\_id is in cache
+    # if not, load persona
+    # send a message and wait for reply.
+    # The PersonaChatResponse object needs to keep the
+    # doc\_id and some other stuff around about the
+    # RAG document.
+
+load\_persona(persona\_id) -> OK:
+    # The config lives on the host system, right? 
+    # So we can look up the PersonaConfig by persona\_id
+
+save\_persona(persona\_id, PersonaConfig) -> OK:
+    # When we make changes to the persona in the browser,
+    # we've gotta save the changes on the server.
+
+load\_settings(): -> OK:
+    # Again, config lives on system.
+
+save\_settings(SettingsConfig): -> OK:
+    # When the user makes settings changes in browser
+    # these values must be saved in the server config
+
+upload\_document(document\_file) -> converted\_file:
+    # This is just the upload step. Both images will be
+    # displayed side-by-side
+
+save\_document\_to\_collection(converted\_doc, collection\_name) -> OK:
+    # Not sure how this is going to work on the back end yet.
+    # Probably, the chunking will happen on the back end after
+    # the save button has been pushed.
+
+download\_document(doc\_id) -> file:
+    # When you get a doc hit on RAG, you should have the option
+    # to redownload the doc. The client will have get doc\_id
+    # So it will be trivial to find it to download.
+
+
+User Interface Funcitonality:
+
+Chat Window
+    When there's a RAG hit, I want the markdown displayed in markdown nice and pretty.
+    I also want a download button for the original RAG doc.
+    I want a copy button
+    I want code to be properly displayed with syntax highlighting
+    Scrollbox for AI's text
+
+Settings Window
+    Change some file locations?
+
+Persona Configuration Window
+    Change system Prompt
+    Change RAG prompt
+    Change server endpoints
+
+
+
+
+
 
 ### I need to do a big refactor to get the rest api to work. (COMPLETE)
 This mainly came down to my lack of understanding of pydantic. It's pretty sick actually. Really nifty.
