@@ -18,22 +18,27 @@ def chat_command(
     args,
     config: Config
 ):
-    qdrant_db: VectorDB = QdrantDB()
 
     # persona_id is often, but not necessarily, the persona's name.
     persona_id = args.persona
     persona_dict = config.persona_dict
     selected_persona: PersonaConfig = persona_dict[persona_id]
+
+    qdrant_db: VectorDB = QdrantDB(
+        host=selected_persona.vector_db_server.hostname,
+        port=selected_persona.vector_db_server.port
+    )
+
     persona: Persona = Persona(
         persona_id=persona_id,
         name=selected_persona.name,
         description=selected_persona.description,
-        db_collections=selected_persona.db_collections,
+        db_collections=selected_persona.rag.collections,
         vector_db=qdrant_db,
         system_prompt=selected_persona.system_prompt,
         model=selected_persona.model,
-        llm_server_hostname=selected_persona.llm_server_hostname,
-        llm_server_port=selected_persona.llm_server_port,
+        llm_server_hostname=selected_persona.llm_server.hostname,
+        llm_server_port=selected_persona.llm_server.port,
     )
 
     while True:
