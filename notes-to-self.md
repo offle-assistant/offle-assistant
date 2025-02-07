@@ -342,6 +342,9 @@ Functions I need:
     before I can make any of these other ones, I'm going to need to set up the sql
     database :/
 
+add\_user(user\_id):
+    \# This, I'm actually not sure how to "get" the user\_id
+
 save\_persona(PersonaConfig) -> OK:
     \# This puts a new persona into the sql db
     \# Not necessarily called every time someone starts a conversation
