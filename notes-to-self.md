@@ -339,6 +339,9 @@ Functions I need:
     All of these are going to require the user\_id to be sent in from the client
     so that the proper session info can be loaded from the redis cache.
 
+    before I can make any of these other ones, I'm going to need to set up the sql
+    database :/
+
 save\_persona(PersonaConfig) -> OK:
     \# This puts a new persona into the sql db
     \# Not necessarily called every time someone starts a conversation
@@ -360,6 +363,8 @@ update\_conversing\_persona(PersonaConfig) -> OK:
     \# This is going to call the same function update\_persona()
     \# uses to update the entry in the database, but it also
     \# reloads the persona that you're conversing with.
+    \# in other words, it's going to check the redis database
+    \# for an entry and update it there.
 
 upload\_document(document\_file) -> converted\_doc:
     \# this should take a doc, convert it into markdown and show
@@ -380,41 +385,7 @@ add\_collection(collection\_name, password) -> OK:
     \# This function will likely change a lot
 
 
-    Example from 4o on managing global state with FastAPI
-    ```
-    from fastapi import FastAPI
-    import uvicorn
-
-    app = FastAPI()
-
-    # Global configuration (shared by all users)
-    app.state.llm_server = {
-        "hostname": "localhost",
-        "port": "11434"
-    }
-
-    app.state.vector_db = {
-        "hostname": "localhost",
-        "port": "6333"
-    }
-
-    if __name__ == "__main__":
-        uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
-
-    ```
-
-    ```
-    from fastapi import APIRouter, Request
-
-    router = APIRouter()
-
-    @router.get("/llm-server")
-    async def get_llm_server(request: Request):
-        return {"llm_server": request.app.state.llm_server}
-
-    ```
-
-User Interface Funcitonality:
+User Interface Functionality:
 
 Persona Select Window (Landing page)
     New Persona -> opens a default Persona Configuration window
