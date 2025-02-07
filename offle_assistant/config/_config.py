@@ -2,7 +2,6 @@ import pathlib
 from typing import Dict, List
 import sys
 
-# from jsonschema import validate, ValidationError
 from pydantic import BaseModel, Field, ValidationError
 import yaml
 

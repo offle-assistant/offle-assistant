@@ -5,8 +5,16 @@ from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import Validator, ValidationError
 
-from offle_assistant.config import OffleConfig, PersonaConfig, LLMServerConfig
-from offle_assistant.persona import Persona, PersonaChatResponse
+from offle_assistant.config import (
+    OffleConfig,
+    PersonaConfig,
+    LLMServerConfig,
+    VectorDbServerConfig
+)
+from offle_assistant.persona import (
+    Persona,
+    PersonaChatResponse
+)
 from offle_assistant.llm_client import LLMClient
 from offle_assistant.vector_db import (
     QdrantDB,
@@ -26,8 +34,10 @@ def chat_command(
     persona_config: PersonaConfig = persona_dict[persona_id]
 
     qdrant_db: VectorDB = QdrantDB(
-        host=config.settings.vector_db_server.hostname,
-        port=config.settings.vector_db_server.port
+        VectorDbServerConfig(
+            hostname=config.settings.vector_db_server.hostname,
+            port=config.settings.vector_db_server.port
+        )
     )
 
     ollama_server_config: LLMServerConfig = LLMServerConfig(

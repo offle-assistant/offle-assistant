@@ -7,7 +7,6 @@ from offle_assistant.config import (
     PersonaConfig,
 )
 from offle_assistant.vector_db import (
-    QdrantDB,
     VectorDB,
     # DbReturnObj
 )
@@ -17,10 +16,6 @@ from offle_assistant.dependencies import get_vector_db, get_llm_client
 router = APIRouter()
 
 persona_cache = {}
-qdrant_db: VectorDB = QdrantDB()
-
-# Not sure if this is how this works
-# settings: SettingsConfig = SettingsConfig()
 
 
 # Request body model
@@ -38,11 +33,14 @@ async def chat_endpoint(
     vector_db: VectorDB = Depends(get_vector_db)
 ):
 
-    persona = SessionManager.get_persona(chat.user_id, chat.persona_config)
+    persona: Persona = SessionManager.get_persona(
+        chat.user_id,
+        chat.persona_config
+    )
     chat_response: PersonaChatResponse = persona.chat(
         user_response=chat.content,
         stream=False,
-        perform_rag=False,
+        perform_rag=True,
         llm_client=llm_client,
         vector_db=vector_db
     )
@@ -52,4 +50,4 @@ async def chat_endpoint(
 
     SessionManager.save_persona(chat.user_id, persona)
 
-    return {"response": response_text}
+    return chat_response

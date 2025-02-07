@@ -1,51 +1,24 @@
 from abc import ABC, abstractmethod
 import pathlib
-from typing import List, Dict, Optional, Type
-
-import numpy as np
+from typing import Optional, Type, List
 
 from offle_assistant.vectorizer import Vectorizer
+from offle_assistant.config import StrictBaseModel
 
 
-class DbReturnObj:
-    def __init__(
-        self,
-        file_name: str,
-        doc_path: pathlib.Path,
-        document_string: str,
-        euclidean_distance: float,
-        cosine_similarity: float,
-        success: bool = True
-    ):
-        self.file_name: str = file_name
-        self.doc_path: pathlib.Path = doc_path
-        self.document_string: str = document_string
-        self.euclidean_distance: float = euclidean_distance
-        self.cosine_similarity: float = cosine_similarity
-        self.success = success
+class DbReturnObj(StrictBaseModel):
+    file_name: str = ""
+    doc_path: pathlib.Path = pathlib.Path("")
+    document_string: str = ""
+    euclidean_distance: float = 0
+    cosine_similarity: float = 0
+    success: bool = False
 
-    def get_hit_text(self) -> str:
-        """
-
-        All this is going to do is return the text to the document.
-        For certain kinds of text, it may be necessary to do some
-        clean up. So it's better to have a getter like this.
-
-        """
+    def get_hit_document_string(self):
         return self.document_string
 
     def get_hit_success(self):
         return self.success
-
-
-class EmptyDbReturn(DbReturnObj):
-    def __init__(self):
-        self.file_name: str = ""
-        self.doc_path: pathlib.Path = pathlib.Path("")
-        self.document_string: str = ""
-        self.euclidean_distance: float = 0
-        self.cosine_similarity: float = 0
-        self.success = False
 
 
 class VectorDB(ABC):
@@ -84,6 +57,7 @@ class VectorDB(ABC):
     def query_collection(
         self,
         collection_name: str,
-        query_vector: np.array
+        query_string: List[str],
+        score_threshold: Optional[float]
     ) -> str:
         pass

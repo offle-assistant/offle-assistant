@@ -4,7 +4,9 @@ from ._config import (
     PersonaConfig,
     SettingsConfig,
     LLMServerConfig,
-    RAGConfig
+    RAGConfig,
+    VectorDbServerConfig,
+    StrictBaseModel
 )
 
 __all__ = [
@@ -13,5 +15,7 @@ __all__ = [
     "load_config",
     "SettingsConfig",
     "LLMServerConfig",
-    "RAGConfig"
+    "RAGConfig",
+    "VectorDbServerConfig",
+    "StrictBaseModel"
 ]

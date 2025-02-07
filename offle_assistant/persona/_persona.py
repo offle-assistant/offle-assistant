@@ -3,14 +3,22 @@ import pickle
 from typing import Union, Generator, List, Optional
 import yaml
 
-from offle_assistant.config import PersonaConfig, RAGConfig
+from offle_assistant.config import (
+    PersonaConfig,
+    # RAGConfig,
+    StrictBaseModel
+)
 from offle_assistant.vector_db import (
     VectorDB,
     DbReturnObj,
-    EmptyDbReturn
 )
 from offle_assistant.vectorizer import Vectorizer
 from offle_assistant.llm_client import LLMClient
+
+
+class PersonaChatResponse(StrictBaseModel):
+    chat_response: Union[str, Generator[str, None, None]] = ""
+    rag_response: DbReturnObj = DbReturnObj()
 
 
 class Persona:
@@ -78,7 +86,7 @@ class Persona:
                 "Given the following context, answer the user's query:\n\n"
             )
             rag_prompt += (
-                f"Context: {RAG_hit.get_hit_text()}\n"
+                f"Context: {RAG_hit.get_hit_document_string()}\n"
             )
             return rag_prompt
         else:
@@ -92,10 +100,11 @@ class Persona:
         stream: bool = False,
         perform_rag: bool = False,
         api_string: str = "ollama",
+        # collection_name: str = ""
     ) -> Union[str, Generator[str, None, None]]:
 
         rag_prompt = ""
-        rag_response: DbReturnObj = EmptyDbReturn()
+        rag_response: DbReturnObj = DbReturnObj()
         if perform_rag is True:
             if vector_db is None:
                 print("Cannot perform RAG without a vectorDB.")
@@ -103,10 +112,10 @@ class Persona:
                 print("Cannot perform RAG without a specified collection.")
             else:
                 rag_response: Optional[DbReturnObj] = (
-                    self.retrieve_context_doc(
-                        query_string=user_response,
+                    vector_db.query_collection(
                         collection_name=self.db_collections[0],
-                        vector_db=vector_db
+                        query_string=user_response,
+                        score_threshold=self.query_threshold,
                     )
                 )
 
@@ -164,23 +173,6 @@ class Persona:
             )
             return persona_chat_response
 
-    def retrieve_context_doc(
-        self,
-        query_string: str,
-        collection_name: str,
-        vector_db: VectorDB
-    ) -> DbReturnObj:
-        vectorizer: Vectorizer = vector_db.get_collection_vectorizer(
-            self.db_collections[0]
-        )
-        query_vector = vectorizer.embed_sentence(query_string)
-        db_return_obj: DbReturnObj = vector_db.query_collection(
-            collection_name=collection_name,
-            query_vector=query_vector,
-            score_threshold=self.query_threshold
-        )
-        return db_return_obj
-
     def serialize(self):
         return pickle.dumps(self)
 
@@ -203,19 +195,6 @@ class Persona:
     #     )
 
     #     return config
-
-
-class PersonaChatResponse:
-    def __init__(
-        self,
-        chat_response: Union[str, Generator[str, None, None]],
-        rag_response: DbReturnObj,
-    ):
-        self.chat_response: Union[
-            str,
-            Generator[str, None, None]
-        ] = chat_response
-        self.rag_response: DbReturnObj = rag_response
 
 
 def get_persona_strings(config_path: pathlib.Path) -> list[Persona]:
