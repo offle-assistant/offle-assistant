@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from offle_assistant.llm_client import LLMClient
@@ -14,8 +15,30 @@ from offle_assistant.routes.v1 import router
 
 app = FastAPI()
 
-app.include_router(router)
 
+@app.get("/")  # ✅ Ensure this allows GET requests
+async def root():
+    return {"message": "FastAPI is running!"}
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://192.168.1.103:5173",
+        "http://192.168.1.249:5173",
+        "http://172.23.0.1:5173",
+        "http://172.24.0.1:5173",
+        "http://172.18.0.1:5173",
+        "http://172.21.0.1:5173",
+        "http://172.25.0.1:5173"
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router)
 
 # Store in `app.state`
 app.state.llm_server: LLMClient = LLMClient(
@@ -29,6 +52,16 @@ app.state.vector_db: VectorDB = QdrantDB(
     )
 )
 
+
+@app.options("/{full_path:path}")
+async def preflight_handler(full_path: str):
+    """Manually handle OPTIONS preflight requests for CORS."""
+    print(f"Received OPTIONS request for: {full_path}")
+    response = Response()
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
 
 def start():
     uvicorn.run(

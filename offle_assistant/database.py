@@ -1,18 +1,13 @@
 import os
 
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from motor.motor_asyncio import AsyncIOMotorClient
 
-
-SQLALCHEMY_DATABASE_URL = (
-    f"postgresql://{os.environ.get('POSTGRES_USER')}:"
-    f"{os.environ.get('POSTGRES_PASSWORD')}@"
-    f"{os.environ.get('POSTGRES_HOST', 'localhost')}:"
-    f"{os.environ.get('POSTGRES_PORT', '5432')}/"
-    f"{os.environ.get('POSTGRES_DB')}"
+MONGO_URI = (
+    f"mongodb://{os.environ.get('MONGO_USER')}"
+    f":{os.environ.get('MONGO_PASSWORD')}@localhost:27017"
 )
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+client = AsyncIOMotorClient(MONGO_URI)
+db = client["offle_assistant"]
+personas_collection = db["personas"]
+users_collection = db["users"]

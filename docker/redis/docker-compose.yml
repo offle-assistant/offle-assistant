@@ -1,0 +1,27 @@
+# Useful commands:
+#     To access the redis cli:
+#   sudo docker exec -it redis-server redis-cli
+#   
+#     To wipe the db
+#   flushdb  # This one definitely
+#   flushall  # tbh, I don't really understand this one
+#
+#     Get keys
+#   keys "*"  # or any pattern here
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis-server
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    command: ["redis-server", "--appendonly", "yes"]
+
+volumes:
+  redis_data:
+    driver: local

@@ -243,6 +243,7 @@ Business/Web Interface
 
 
 ### Build out the production REST api
+NEXT Create a getPersonas(user\_id) route and hook it up to react.
 Sending data
     send a message to a specific bot and get a response
         This requires loading the PersonaConfig
@@ -342,8 +343,9 @@ Functions I need:
     before I can make any of these other ones, I'm going to need to set up the sql
     database :/
 
-add\_user(user\_id):
-    \# This, I'm actually not sure how to "get" the user\_id
+add\_user(user\_info): (COMPLETE)
+update\_user(user\_id, user\_info): (COMPLETE)
+delete\_user(user\_id): (COMPLETE)
 
 save\_persona(PersonaConfig) -> OK:
     \# This puts a new persona into the sql db
@@ -386,6 +388,7 @@ add\_collection(collection\_name, password) -> OK:
     \# Before I touch this, I need to better research how 
     \# qdrant authentications work.
     \# This function will likely change a lot
+
 
 
 User Interface Functionality:
@@ -475,6 +478,25 @@ something robust!!
 ### Create message history
 I want at least a log of conversations per-persona. One file per conversation.
 
+------------------------------------------------
+General implementation thought/ideas
+------------------------------------------------
+
+I've been thinking about how to deploy an agent that you've created. I think the idea of a config file is the right one.
+But with this, I do think that there needs to be a decision made about how to handle directing the bot to the correct
+ollama/openAI/Qdrant server. Right now, url is handled in global state. However, the Persona actually only handles this
+url at the time the request is made. side note: I should really also put the collections in here too. but basically,
+what I have right now is a framework for BUILDING an agent. Yes, you can use it within this framework and make tweaks
+and such. But this is really primarily for building and then exporting a yaml file that describes the bot. This yaml
+file probably should be different from the one I built. I should group key/value pairs more along the lines of what makes
+sense. In other words, key for persona (model, system-prompt, description, name, temperature, token limit, api-token), one 
+for rag (server url, threshold, collections, api-token), and I think that's about it, right? Then you can share this file
+with someone. Obviously, the tokens will be blank when you share the file. 
+
+There will be a web interface exclusively for users. This has your available agents on the left and your that window in
+the center. There will be a "load agent" button on the left side with the available agents.  When you load the config file
+in, it will prompt you for your tokens. Once you input the tokens, you'll have full access to use the bot within this
+interface.
 
 ------------------------------------------------
 Further along in the future

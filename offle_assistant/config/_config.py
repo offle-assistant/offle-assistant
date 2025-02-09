@@ -5,6 +5,8 @@ import sys
 from pydantic import BaseModel, Field, ValidationError
 import yaml
 
+from offle_assistant.models import PersonaModel
+
 
 class StrictBaseModel(BaseModel):
     model_config = {"extra": "forbid"}
@@ -52,26 +54,29 @@ class SettingsConfig(StrictBaseModel):
 
 
 # ----- Persona-related Models -----
-class RAGConfig(StrictBaseModel):
-    collections: List[str] = Field(default_factory=list)
-    threshold: float = 0
+# class RAGConfig(StrictBaseModel):
+#     collections: List[str] = Field(default_factory=list)
+#     threshold: float = 0
     # document: Optional[str] = None
     # related_docs: List[str] = Field(default_factory=list)
 
 
-class PersonaConfig(StrictBaseModel):
-    persona_id: str = ""  # used for session management
-    name: str = "Offie"
-    model: str = "llama3.2"
-    system_prompt: str = "You are a helpful assistant."
-    description: str = "This is the default chatbot."
-    temperature: float = 0.7
-    rag: RAGConfig = RAGConfig()
-    # max_tokens: int = 4096
+# class PersonaConfig(StrictBaseModel):
+#     persona_id: int = -1  # used for session management
+#     name: str = "Offie"
+#     model: str = "llama3.2"
+#     system_prompt: str = "You are a helpful assistant."
+#     description: str = "This is the default chatbot."
+#     temperature: float = 0.7
+#     rag: RAGConfig = RAGConfig()
+#     # max_tokens: int = 4096
+# 
+#     class Config:
+#         from_attributes = True
 
 
 class OffleConfig(StrictBaseModel):
-    personas: Dict[str, PersonaConfig]
+    personas: Dict[str, PersonaModel]
     settings: SettingsConfig = SettingsConfig()
 
 

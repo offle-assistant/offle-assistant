@@ -1,0 +1,13 @@
+Tests I need:
+
+add new user: should succeed
+add user with the same email: should fail
+delete user: should succeed
+delete other user: should fail
+
+add persona to existing user: should succeed
+add persona to another user: should fail
+load another user's persona: should fail
+delete one of your personas: should succeed
+delete other user's persona: should fail
+

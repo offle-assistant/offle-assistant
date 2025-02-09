@@ -1,5 +1,9 @@
+from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel, EmailStr
 
+from offle_assistant.models import PersonaModel
 
 class UserCreate(BaseModel):
     first_name: str
@@ -8,9 +12,9 @@ class UserCreate(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    first_name: str | None = None
-    last_name: str | None = None
-    email: EmailStr | None = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
 
 
 class UserOut(BaseModel):
@@ -22,3 +26,12 @@ class UserOut(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+
+class PersonaCreateDefault(BaseModel):
+    user_id: int
+    persona_name: Optional[str] = "Offie"
+
+
+PersonaOut = PersonaModel
+PersonaUpdate = PersonaModel

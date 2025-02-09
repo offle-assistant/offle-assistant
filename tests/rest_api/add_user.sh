@@ -4,6 +4,6 @@ curl -X POST \
     -d '{
         "first_name": "Reed",
         "last_name": "Tucker",
-        "email": "super@sick.yes"
+        "email": "ssdassdsuperduper@sick.yes"
     }'
 

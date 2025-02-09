@@ -7,7 +7,6 @@ from prompt_toolkit.validation import Validator, ValidationError
 
 from offle_assistant.config import (
     OffleConfig,
-    PersonaConfig,
     LLMServerConfig,
     VectorDbServerConfig
 )
@@ -21,6 +20,7 @@ from offle_assistant.vector_db import (
     VectorDB,
     DbReturnObj
 )
+from offle_assistant.models import PersonaModel
 
 
 def chat_command(
@@ -31,7 +31,7 @@ def chat_command(
     # persona_id is often, but not necessarily, the persona's name.
     persona_id = args.persona
     persona_dict = config.personas
-    persona_config: PersonaConfig = persona_dict[persona_id]
+    persona_model: PersonaModel = persona_dict[persona_id]
 
     qdrant_db: VectorDB = QdrantDB(
         VectorDbServerConfig(
@@ -49,8 +49,7 @@ def chat_command(
     )
 
     persona: Persona = Persona(
-        persona_id=persona_id,
-        config=persona_config
+        persona_model=persona_model
     )
 
     while True:

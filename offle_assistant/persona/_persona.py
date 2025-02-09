@@ -1,19 +1,20 @@
 import pathlib
-import pickle
 from typing import Union, Generator, List, Optional
 import yaml
 
 from offle_assistant.config import (
-    PersonaConfig,
-    # RAGConfig,
     StrictBaseModel
 )
 from offle_assistant.vector_db import (
     VectorDB,
     DbReturnObj,
 )
-from offle_assistant.vectorizer import Vectorizer
 from offle_assistant.llm_client import LLMClient
+from offle_assistant.models import (
+    PersonaModel,
+    MessageContent,
+    QueryMetric,
+)
 
 
 class PersonaChatResponse(StrictBaseModel):
@@ -27,36 +28,37 @@ class Persona:
     The Persona class handles all chat functionality and has the ability
     to perform RAG before providing an answer.
 
-    In order to perform RAG, you must provide the Persona constructor
-    with a vectorDB. It might make sense down the line to be able to
-    provide the vectorDB directly to the Persona.chat() method so that
-    you can select different DBs to query from mid-conversation.
+    In order to perform RAG, you must provide the chat method with a
+    VectorDb
 
 
     """
 
     def __init__(
         self,
-        persona_id: str,
-        config: PersonaConfig
+        persona_model: PersonaModel,
+        message_chain: List[MessageContent] = []
     ):
-        self.persona_id: str = persona_id
-        self.name: str = config.name
-        self.model: str = config.model
-        self.description: str = config.description
-        self.system_prompt: str = (
-            f"Your name is {self.name}. " + config.system_prompt
+        self.name: str = persona_model.name
+        self.model: str = persona_model.model
+        self.description: str = persona_model.description
+        self.system_prompt: str = persona_model.system_prompt
+        self.temperature: float = persona_model.temperature
+        self.query_threshold: Optional[float] = (
+            persona_model.rag.query_threshold
         )
-        self.temperature: float = config.temperature
-        self.query_threshold: Optional[float] = config.rag.threshold
-        self.db_collections: List[str] = config.rag.collections
+        self.db_collections: List[str] = persona_model.rag.db_collections
+        self.query_metric: QueryMetric = persona_model.rag.query_metric
+        self.additional_rag_settings = persona_model.rag.additional_settings
+        self.message_chain: List[MessageContent] = message_chain
 
-        self.system_prompt_message = {
-            "role": "system",
-            "content": self.system_prompt
-        }
-        self.message_chain = []
-        self.temperature = 0.8
+        if len(self.message_chain) <= 0:
+            self.system_prompt_message = {
+                "role": "system",
+                "content": f"Your name is {self.name}. " +
+                self.system_prompt
+            }
+            self.message_chain.append(self.system_prompt_message)
 
     def load_config(self, config_path: pathlib.Path):
         with open(config_path, "r") as f:
@@ -101,8 +103,8 @@ class Persona:
         perform_rag: bool = False,
         api_string: str = "ollama",
         # collection_name: str = ""
-    ) -> Union[str, Generator[str, None, None]]:
-
+    ) -> PersonaChatResponse:
+        print("THRESHOLD: ", self.query_threshold)
         rag_prompt = ""
         rag_response: DbReturnObj = DbReturnObj()
         if perform_rag is True:
@@ -127,7 +129,6 @@ class Persona:
             "role": "user",
             "content": rag_prompt + "User: " + user_response
         }
-        self.message_chain.append(self.system_prompt_message)
         self.message_chain.append(user_message)
 
         chat_response: Union[str, Generator[str, None, None]] = (
@@ -171,49 +172,23 @@ class Persona:
                 chat_response=response_text,
                 rag_response=rag_response
             )
+
+            # print("CHAT_RESPONSE:", persona_chat_response)
             return persona_chat_response
 
-    def serialize(self):
-        return pickle.dumps(self)
+    def get_persona_model(self):
+        persona_model = PersonaModel(
+            user_id=self.user_id,
+            name=self.name,
+            description=self.description,
+            model=self.model,
+            system_prompt=self.system_prompt,
+            temperature=self.temperature,
+            db_collections=self.db_collections,
+            query_threshold=self.query_threshold,
+        )
 
-    @staticmethod
-    def deserialize(serialized_persona):
-        return pickle.loads(serialized_persona)
+        return persona_model
 
-    # def get_config(self):
-    #     rag_config: RAGConfig = RAGConfig(
-    #         collections=self.db_collections,
-    #         threshold=self.query_threshold
-    #             )
-    #     config: PersonaConfig = PersonaConfig(
-    #         name=self.name,
-    #         models=self.model,
-    #         system_prompt=self.system_prompt,
-    #         description=self.description,
-    #         temperature=self.temperature,
-    #         rag_config=rag_config
-    #     )
-
-    #     return config
-
-
-def get_persona_strings(config_path: pathlib.Path) -> list[Persona]:
-    with open(config_path, "r") as f:
-        config_dict = yaml.safe_load(f)
-
-        persona_strings = []
-        for persona_id in config_dict["personas"].keys():
-            persona = Persona(
-                persona_id=persona_id,
-                config_path=config_path
-            )
-            persona_string = "\n".join(
-                [
-                    persona.name + ":",
-                    "\tDescription: " + persona.description,
-                    "\tModel: " + persona.model
-
-                ]
-            )
-            persona_strings.append(persona_string)
-        return persona_strings
+    def get_message_chain(self):
+        return self.message_chain

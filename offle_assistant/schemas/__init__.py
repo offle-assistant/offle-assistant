@@ -1,12 +1,18 @@
 from ._schemas import (
     UserCreate,
     UserUpdate,
-    UserOut
+    UserOut,
+    PersonaCreateDefault,
+    PersonaUpdate,
+    PersonaOut
 )
 
 
 __all__ = [
     "UserCreate",
     "UserUpdate",
-    "UserOut"
+    "UserOut",
+    "PersonaCreate",
+    "PersonaUpdate",
+    "PersonaOut"
 ]
