@@ -93,6 +93,19 @@ Every other time that you start developing, you need to make sure all the server
     $ sudo docker-compose up -d
 
 ```
+* Shelling into the mongodb server, and promoting a user to admin role
+```
+    $ docker exec -it mongodb_container mongosh -u myuser -p mypassword --authenticationDatabase admin
+    $ show dbs
+    $ use <db_name>
+    $ show collections
+    $ db.users.findOne({email: "admin@example.com"}) # Check the current role
+    $ db.users.updateOne(
+        {email: "admin@example.com"},
+        {$set: {role: "admin"}}
+    )
+    $ db.users.findOne({email: "admin@example.com"})  # Check if it worked
+```
 
 * Start qdrant server
 ```

@@ -9,7 +9,8 @@ from ._common_utils import PyObjectId
 
 class PersonaModel(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
-    user_id: PyObjectId
+    user_id: Optional[PyObjectId] = None
+    creator_id: Optional[PyObjectId] = None
     name: str = Field(..., min_length=3, max_length=50)
     description: str = Field(..., max_length=500)
     system_prompt: str = Field(default="You are a helpful AI assistant.")

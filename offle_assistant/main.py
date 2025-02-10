@@ -11,12 +11,17 @@ from offle_assistant.config import (
     LLMServerConfig,
     VectorDbServerConfig
 )
-from offle_assistant.routes.v1 import router
+from offle_assistant.routes.v1 import (
+    auth_router,
+    users_router,
+    admin_router,
+    personas_router
+)
 
 app = FastAPI()
 
 
-@app.get("/")  # ✅ Ensure this allows GET requests
+@app.get("/")  # Ensure this allows GET requests
 async def root():
     return {"message": "FastAPI is running!"}
 
@@ -38,7 +43,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+app.include_router(users_router, prefix="/users", tags=["Users"])
+app.include_router(admin_router, prefix="/admin", tags=["Admin"])
+app.include_router(personas_router, prefix="/personas", tags=["Personas"])
 
 # Store in `app.state`
 app.state.llm_server: LLMClient = LLMClient(
@@ -62,6 +70,7 @@ async def preflight_handler(full_path: str):
     response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return response
+
 
 def start():
     uvicorn.run(
