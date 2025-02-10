@@ -1,9 +1,9 @@
-from offle_assistant.config import Config
+from offle_assistant.config import OffleConfig
 
 
 def config_command(
     args,
-    config: Config
+    config: OffleConfig
 ):
     if args.validate is True:
         print(config)

@@ -1,16 +1,25 @@
-import ollama
-from ollama import ChatResponse
 import pathlib
 from typing import Union, Generator, List, Optional
 import yaml
-import sys
 
+from offle_assistant.config import (
+    StrictBaseModel
+)
 from offle_assistant.vector_db import (
     VectorDB,
     DbReturnObj,
-    EmptyDbReturn
 )
-from offle_assistant.vectorizer import Vectorizer
+from offle_assistant.llm_client import LLMClient
+from offle_assistant.models import (
+    PersonaModel,
+    MessageContent,
+    QueryMetric,
+)
+
+
+class PersonaChatResponse(StrictBaseModel):
+    chat_response: Union[str, Generator[str, None, None]] = ""
+    rag_response: DbReturnObj = DbReturnObj()
 
 
 class Persona:
@@ -19,54 +28,37 @@ class Persona:
     The Persona class handles all chat functionality and has the ability
     to perform RAG before providing an answer.
 
-    In order to perform RAG, you must provide the Persona constructor
-    with a vectorDB. It might make sense down the line to be able to
-    provide the vectorDB directly to the Persona.chat() method so that
-    you can select different DBs to query from mid-conversation.
+    In order to perform RAG, you must provide the chat method with a
+    VectorDb
 
 
     """
 
     def __init__(
         self,
-        persona_id: str,
-        name: str,
-        description: str,
-        system_prompt: str,
-        db_collections: List[str],
-        model: str,
-        vector_db: Optional[VectorDB] = None,
-        query_threshold: Optional[float] = None,
-        llm_server_hostname: str = 'localhost',
-        llm_server_port: int = 11434,
+        persona_model: PersonaModel,
+        message_chain: List[MessageContent] = []
     ):
-        self.persona_id: str = persona_id
-        self.name: str = name
-        self.description: str = description
-        self.db_collections: List[str] = db_collections
-        self.system_prompt: str = f"Your name is {self.name}. " + system_prompt
-        self.model: str = model
-        self.vector_db = vector_db
-        self.llm_server_hostname: str = llm_server_hostname
-        self.llm_server_port: int = llm_server_port
-        self.query_threshold: Optional[float] = query_threshold
+        self.name: str = persona_model.name
+        self.model: str = persona_model.model
+        self.description: str = persona_model.description
+        self.system_prompt: str = persona_model.system_prompt
+        self.temperature: float = persona_model.temperature
+        self.query_threshold: Optional[float] = (
+            persona_model.rag.query_threshold
+        )
+        self.db_collections: List[str] = persona_model.rag.db_collections
+        self.query_metric: QueryMetric = persona_model.rag.query_metric
+        self.additional_rag_settings = persona_model.rag.additional_settings
+        self.message_chain: List[MessageContent] = message_chain
 
-        # This handles providing a server ip/port
-        try:
-            server_url = (
-                f'http://{self.llm_server_hostname}:{self.llm_server_port}'
-            )
-            self.chat_client = ollama.Client(server_url)
-        except Exception as e:
-            print(f"An exception occurred while connecting to llm server: {e}")
-            sys.exit(1)
-
-        self.system_prompt_message = {
-            "role": "system",
-            "content": self.system_prompt
-        }
-        self.message_chain = []
-        self.temperature = 0.8
+        if len(self.message_chain) <= 0:
+            self.system_prompt_message = {
+                "role": "system",
+                "content": f"Your name is {self.name}. " +
+                self.system_prompt
+            }
+            self.message_chain.append(self.system_prompt_message)
 
     def load_config(self, config_path: pathlib.Path):
         with open(config_path, "r") as f:
@@ -96,7 +88,7 @@ class Persona:
                 "Given the following context, answer the user's query:\n\n"
             )
             rag_prompt += (
-                f"Context: {RAG_hit.get_hit_text()}\n"
+                f"Context: {RAG_hit.get_hit_document_string()}\n"
             )
             return rag_prompt
         else:
@@ -105,22 +97,27 @@ class Persona:
     def chat(
         self,
         user_response,
+        llm_client: LLMClient,
+        vector_db: VectorDB,
         stream: bool = False,
-        perform_rag: bool = False
-    ) -> Union[str, Generator[str, None, None]]:
-
+        perform_rag: bool = False,
+        api_string: str = "ollama",
+        # collection_name: str = ""
+    ) -> PersonaChatResponse:
+        print("THRESHOLD: ", self.query_threshold)
         rag_prompt = ""
-        rag_response: DbReturnObj = EmptyDbReturn()
+        rag_response: DbReturnObj = DbReturnObj()
         if perform_rag is True:
-            if self.vector_db is None:
+            if vector_db is None:
                 print("Cannot perform RAG without a vectorDB.")
             elif len(self.db_collections) <= 0:
                 print("Cannot perform RAG without a specified collection.")
             else:
                 rag_response: Optional[DbReturnObj] = (
-                    self.retrieve_context_doc(
+                    vector_db.query_collection(
+                        collection_name=self.db_collections[0],
                         query_string=user_response,
-                        collection_name=self.db_collections[0]
+                        score_threshold=self.query_threshold,
                     )
                 )
 
@@ -132,24 +129,22 @@ class Persona:
             "role": "user",
             "content": rag_prompt + "User: " + user_response
         }
-        self.message_chain.append(self.system_prompt_message)
         self.message_chain.append(user_message)
 
-        chat_response: ChatResponse = self.chat_client.chat(
-            model=self.model,
-            messages=self.message_chain,
-            stream=stream,
-            # https://github.com/ollama/ollama/blob/main/docs/api.md#generate-request-with-options
-            options={
-                "temperature": self.temperature,
-            }
+        chat_response: Union[str, Generator[str, None, None]] = (
+            llm_client.chat(
+                model=self.model,
+                message_chain=self.message_chain,
+                stream=stream,
+                api_string=api_string
+            )
         )
 
         if stream is True:
             def response_generator():
                 response_text = ""
                 for chunk in chat_response:
-                    chunk_content = chunk['message']['content']
+                    chunk_content = chunk
                     yield chunk_content
                     response_text += chunk_content
 
@@ -166,7 +161,7 @@ class Persona:
 
             return persona_chat_response
         else:
-            response_text = chat_response['message']['content']
+            response_text = chat_response
             chat_message = {
                 "role": "assistant",
                 "content": response_text
@@ -177,59 +172,23 @@ class Persona:
                 chat_response=response_text,
                 rag_response=rag_response
             )
+
+            # print("CHAT_RESPONSE:", persona_chat_response)
             return persona_chat_response
 
-    def retrieve_context_doc(
-        self,
-        query_string: str,
-        collection_name: str
-    ) -> DbReturnObj:
-        vectorizer: Vectorizer = self.get_vectorizer(
-            self.db_collections[0]
-        )
-        query_vector = vectorizer.embed_sentence(query_string)
-        db_return_obj: DbReturnObj = self.vector_db.query_collection(
-            collection_name=collection_name,
-            query_vector=query_vector,
-            score_threshold=self.query_threshold
+    def get_persona_model(self):
+        persona_model = PersonaModel(
+            user_id=self.user_id,
+            name=self.name,
+            description=self.description,
+            model=self.model,
+            system_prompt=self.system_prompt,
+            temperature=self.temperature,
+            db_collections=self.db_collections,
+            query_threshold=self.query_threshold,
         )
 
-        return db_return_obj
+        return persona_model
 
-    def get_vectorizer(self, collection_name: str) -> Vectorizer:
-        vectorizer: Vectorizer = self.vector_db.get_collection_vectorizer(
-            collection_name=collection_name
-        )
-        return vectorizer
-
-
-class PersonaChatResponse:
-    def __init__(
-        self,
-        chat_response: Union[str, Generator[str, None, None]],
-        rag_response: DbReturnObj,
-    ):
-        self.chat_response: Union[str, Generator[str, None, None]] = chat_response
-        self.rag_response: DbReturnObj = rag_response
-
-
-def get_persona_strings(config_path: pathlib.Path) -> list[Persona]:
-    with open(config_path, "r") as f:
-        config_dict = yaml.safe_load(f)
-
-        persona_strings = []
-        for persona_id in config_dict["personas"].keys():
-            persona = Persona(
-                persona_id=persona_id,
-                config_path=config_path
-            )
-            persona_string = "\n".join(
-                [
-                    persona.name + ":",
-                    "\tDescription: " + persona.description,
-                    "\tModel: " + persona.model
-
-                ]
-            )
-            persona_strings.append(persona_string)
-        return persona_strings
+    def get_message_chain(self):
+        return self.message_chain

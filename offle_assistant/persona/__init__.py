@@ -1,6 +1,9 @@
-from ._persona import Persona, PersonaChatResponse
+from ._persona import (
+    Persona,
+    PersonaChatResponse,
+)
 
 __all__ = [
     "Persona",
-    "PersonaChatResponse"
+    "PersonaChatResponse",
 ]

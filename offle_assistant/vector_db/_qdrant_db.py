@@ -24,20 +24,25 @@ from offle_assistant.vectorizer import (
     vectorizer_lookup_table
 )
 from ._vector_db import (
-    VectorDB, DbReturnObj, EmptyDbReturn
+    VectorDB, DbReturnObj
 )
 from offle_assistant.vector_math import (
     cosine_similarity,
     euclidean_distance
+)
+from offle_assistant.config import (
+    VectorDbServerConfig
 )
 
 
 class QdrantDB(VectorDB):
     def __init__(
         self,
-        host: str = "localhost",
-        port: int = 6333,
+        vector_db_server_config: VectorDbServerConfig,
     ):
+        host: str = vector_db_server_config.hostname
+        port: int = vector_db_server_config.port
+
         self.client: QdrantClient = QdrantClient(host=host, port=port)
         self.metadata_id = 0
 
@@ -95,8 +100,8 @@ class QdrantDB(VectorDB):
 
     def query_collection(
         self,
+        query_string: str,
         collection_name: str,
-        query_vector: np.array,
         score_threshold: Optional[float] = None
     ) -> Optional[DbReturnObj]:
         """
@@ -118,6 +123,11 @@ class QdrantDB(VectorDB):
 
         """
 
+        vectorizer: Vectorizer = self.get_collection_vectorizer(
+            collection_name=collection_name
+        )
+        query_vector = vectorizer.embed_sentence(query_string)
+
         search_params = SearchParams(hnsw_ef=512)
         search_results = self.client.search(
             collection_name=collection_name,
@@ -129,7 +139,7 @@ class QdrantDB(VectorDB):
         )
 
         if len(search_results) <= 0:
-            return EmptyDbReturn()
+            return DbReturnObj()
 
         hit: PointStruct = search_results[0]
 

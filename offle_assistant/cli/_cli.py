@@ -7,7 +7,7 @@ from ._persona_command import persona_command
 from ._config_command import config_command
 from ._rag_command import rag_command
 
-from offle_assistant.config import Config
+from offle_assistant.config import load_config, OffleConfig
 
 
 # This may need to be handled more elegantly later.
@@ -139,10 +139,10 @@ class CLI:
     def run(self):
         if USER_CONFIG.is_file():
             print(f"Loading config: {USER_CONFIG}")
-            self.config = Config(USER_CONFIG)
+            self.config: OffleConfig = load_config(USER_CONFIG)
         elif SYSTEM_CONFIG.is_file():
             print(f"Loading config: {SYSTEM_CONFIG}")
-            self.config = Config(SYSTEM_CONFIG)
+            self.config: OffleConfig = load_config(SYSTEM_CONFIG)
         else:
             print("ERROR: no valid config")
             sys.exit(1)
@@ -152,3 +152,12 @@ class CLI:
             args=self.args,
             config=self.config,
         )
+
+
+def main():
+    cli = CLI()
+    cli.run()
+
+
+if __name__ == "__main__":
+    main()
