@@ -7,7 +7,7 @@ from pydantic import BaseModel, EmailStr, Field
 from ._common_utils import PyObjectId
 
 
-Role = Literal["user", "admin"]
+Role = Literal["user", "admin", "builder"]
 
 
 class UserModel(BaseModel):

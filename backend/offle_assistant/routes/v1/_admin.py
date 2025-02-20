@@ -1,5 +1,6 @@
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
 from offle_assistant.database import users_collection
 from offle_assistant.auth import admin_required
@@ -8,7 +9,11 @@ from offle_assistant.models import Role
 admin_router = APIRouter()
 
 
-@admin_router.delete("/users/{user_id}")
+class RoleUpdateRequest(BaseModel):
+    new_role: Role
+
+
+@admin_router.delete("/users/{user_id}/delete")
 async def delete_user(user_id: str, admin: dict = Depends(admin_required)):
     """Allows an admin to delete a user."""
     deleted = await users_collection.delete_one({"_id": ObjectId(user_id)})
@@ -20,9 +25,11 @@ async def delete_user(user_id: str, admin: dict = Depends(admin_required)):
 @admin_router.put("/users/{user_id}/role")
 async def update_user_role(
     user_id: str,
-    new_role: str,
+    role_update: RoleUpdateRequest,
     admin: dict = Depends(admin_required)
 ):
+    new_role: Role = role_update.new_role
+
     """Allows an admin to change a user's role."""
     if new_role not in Role.__args__:
         raise HTTPException(status_code=400, detail="Invalid role")
