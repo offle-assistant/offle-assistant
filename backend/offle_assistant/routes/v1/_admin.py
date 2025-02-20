@@ -13,7 +13,7 @@ class RoleUpdateRequest(BaseModel):
     new_role: Role
 
 
-@admin_router.delete("/users/{user_id}")
+@admin_router.delete("/users/{user_id}/delete")
 async def delete_user(user_id: str, admin: dict = Depends(admin_required)):
     """Allows an admin to delete a user."""
     deleted = await users_collection.delete_one({"_id": ObjectId(user_id)})
