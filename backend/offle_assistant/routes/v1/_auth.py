@@ -4,7 +4,7 @@ from datetime import timedelta
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from offle_assistant.database import users_collection
+from offle_assistant.mongo import users_collection
 from offle_assistant.models import UserModel, Role
 from offle_assistant.auth import (
     hash_password,

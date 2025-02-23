@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from bson import ObjectId
 
 from ._utils import SECRET_KEY, ALGORITHM
-from offle_assistant.database import users_collection
+from offle_assistant.mongo import users_collection
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
