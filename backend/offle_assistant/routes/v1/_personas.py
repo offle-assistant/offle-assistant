@@ -42,7 +42,7 @@ async def create_persona(
 
     return {
         "message": "Persona created successfully",
-        "persona_id": persona_id
+        "persona_id": str(persona_id)
     }
 
 
