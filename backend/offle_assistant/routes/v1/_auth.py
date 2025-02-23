@@ -4,13 +4,14 @@ from datetime import timedelta
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from offle_assistant.database import users_collection
+from offle_assistant.mongo import users_collection
 from offle_assistant.models import UserModel, Role
 from offle_assistant.auth import (
     hash_password,
     verify_password,
     create_access_token
 )
+from offle_assistant.database import create_user_in_db, get_user_by_email
 
 auth_router = APIRouter()
 
@@ -37,9 +38,7 @@ async def register_user(user: AuthModel, role: Role = "user"):
     )
 
     # Plug the user into the database
-    inserted_user = await users_collection.insert_one(
-        new_user.dict(exclude={"id"})
-    )
+    inserted_user = await create_user_in_db(new_user)
 
     # return a success message with the newly created id
     return {
@@ -53,7 +52,7 @@ async def login_user(user: AuthModel):
     """Authenticates a user and returns a JWT token."""
 
     # Find user by email
-    db_user = await users_collection.find_one({"email": user.email})
+    db_user = await get_user_by_email(user.email)
 
     # Check if the user query returned a hit and verify password
     if not db_user or not verify_password(

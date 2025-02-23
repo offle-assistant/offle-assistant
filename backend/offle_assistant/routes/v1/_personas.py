@@ -1,9 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from bson import ObjectId
 
-from offle_assistant.database import personas_collection, users_collection
 from offle_assistant.auth import builder_required, get_current_user
-from offle_assistant.models import PersonaModel
+from offle_assistant.models import PersonaModel, PersonaUpdateModel
+from offle_assistant.database import (
+    get_personas_by_user_id,
+    get_user_by_id,
+    create_persona_in_db,
+    get_persona_by_id,
+    update_persona_in_db
+)
 
 personas_router = APIRouter()
 
@@ -12,19 +18,7 @@ personas_router = APIRouter()
 async def get_user_personas(user: dict = Depends(get_current_user)):
     """Returns a dictionary of all personas owned by the logged-in user."""
 
-    user_id = user["_id"]
-
-    # Find all personas where the creator_id matches the user's _id
-    personas = await personas_collection.find(
-        {"creator_id": ObjectId(user_id)}
-    ).to_list(None)
-
-    # Convert the result to a dictionary {persona_id: persona_name}
-    persona_dict = {
-        str(persona["_id"]): persona["name"] for persona in personas
-    }
-
-    return persona_dict
+    return await get_personas_by_user_id(user["_id"])
 
 
 @personas_router.post("/build")
@@ -36,37 +30,33 @@ async def create_persona(
 
     # Ensure the user exists in the database
     creator_id = user["_id"]
-    existing_user = await users_collection.find_one(
-        {"_id": ObjectId(creator_id)}
-    )
+    existing_user = get_user_by_id(creator_id)
 
     if not existing_user:
         raise HTTPException(
             status_code=400, detail="Invalid user_id: User does not exist"
         )
 
-    # Attach the creator's user_id to track ownership
-    persona_data = persona.dict()
-    persona_data["creator_id"] = creator_id
-    persona_data["user_id"] = creator_id
+    persona_id = await create_persona_in_db(persona, creator_id)
 
-    new_persona = await personas_collection.insert_one(persona_data)
     return {
         "message": "Persona created successfully",
-        "persona_id": str(new_persona.inserted_id)
+        "persona_id": str(persona_id)
     }
 
 
 @personas_router.put("/build/{persona_id}")
 async def update_persona(
-    persona_id: str, updates: dict, user: dict = Depends(builder_required)
+    persona_id: str,
+    updates: PersonaUpdateModel,
+    user: dict = Depends(builder_required)
 ):
     """
         Allows builders to update their own personas
         and admins to update any persona.
     """
 
-    persona = await personas_collection.find_one({"_id": ObjectId(persona_id)})
+    persona = await get_persona_by_id(persona_id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
@@ -75,11 +65,11 @@ async def update_persona(
             status_code=403, detail="You can only modify your own personas"
         )
 
-    updated = await personas_collection.update_one(
-        {"_id": ObjectId(persona_id)},
-        {"$set": updates}
-    )
-    if updated.modified_count == 0:
+    update_data = updates.model_dump(exclude_unset=True)
+
+    update_success = await update_persona_in_db(persona_id, update_data)
+
+    if update_success.modified_count == 0:
         raise HTTPException(status_code=400, detail="No changes made")
 
     return {"message": "Persona updated successfully"}

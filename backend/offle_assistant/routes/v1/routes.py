@@ -7,7 +7,7 @@ from fastapi import (
 )
 from pydantic import BaseModel
 
-from offle_assistant.database import users_collection, personas_collection
+from offle_assistant.mongo import users_collection, personas_collection
 from offle_assistant.models import User, PersonaModel
 from bson import ObjectId
 
