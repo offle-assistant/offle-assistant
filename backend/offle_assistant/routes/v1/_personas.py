@@ -8,6 +8,25 @@ from offle_assistant.models import PersonaModel
 personas_router = APIRouter()
 
 
+@personas_router.get("/owned")
+async def get_user_personas(user: dict = Depends(get_current_user)):
+    """Returns a dictionary of all personas owned by the logged-in user."""
+
+    user_id = user["_id"]
+
+    # Find all personas where the creator_id matches the user's _id
+    personas = await personas_collection.find(
+        {"creator_id": ObjectId(user_id)}
+    ).to_list(None)
+
+    # Convert the result to a dictionary {persona_id: persona_name}
+    persona_dict = {
+        str(persona["_id"]): persona["name"] for persona in personas
+    }
+
+    return persona_dict
+
+
 @personas_router.post("/build")
 async def create_persona(
     persona: PersonaModel,
