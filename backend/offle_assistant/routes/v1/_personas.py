@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from bson import ObjectId
 
-from offle_assistant.mongo import personas_collection, users_collection
 from offle_assistant.auth import builder_required, get_current_user
 from offle_assistant.models import PersonaModel, PersonaUpdateModel
 from offle_assistant.database import (

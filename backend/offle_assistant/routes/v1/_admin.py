@@ -1,8 +1,6 @@
-from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from offle_assistant.mongo import users_collection
 from offle_assistant.auth import admin_required
 from offle_assistant.models import Role
 from offle_assistant.database import (
