@@ -3,6 +3,9 @@ services:
     image: mongo:6.0  # Use latest MongoDB version
     container_name: mongodb
     restart: always
+    # On windows, this is eff'd. It doesn't set authentication properly on first start.
+    # For setup, you need to comment out these lines then shell into the mongo db and
+    # manually create the user with your credentials in the admin db with the root and admin roles.
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
