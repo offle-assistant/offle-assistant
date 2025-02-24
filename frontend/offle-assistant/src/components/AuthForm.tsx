@@ -17,13 +17,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
         const endpoint = type === "login" ? "/auth/login" : "/auth/register";
         try {
             const res = await api.post(endpoint, { email, password });
-    
+
             if (type === "login") {
-                localStorage.setItem("token", res.data.access_token);
-                setAuthToken(res.data.access_token);
-                navigate("/personas");
+                const token = res.data.access_token;
+                localStorage.setItem("token", token); //Store JWT token
+                setAuthToken(token); //Attach token to axios headers
+                navigate("/personas"); //Redirect after login
             }
-            alert(res.data.message);
+            alert("Login successful!");
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
                 alert(err.response?.data?.detail || "An error occurred");
