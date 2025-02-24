@@ -10,7 +10,7 @@ from offle_assistant.models import (
     UserModel,
     PyObjectId
 )
-from offle_assistant.persona import Persona
+from offle_assistant.persona import Persona, PersonaChatResponse
 from offle_assistant.database import (
     get_personas_by_creator_id,
     get_user_by_id,
@@ -21,6 +21,11 @@ from offle_assistant.database import (
     get_message_history_list_by_user_id
 )
 from offle_assistant.session_manager import SessionManager
+from offle_assistant.llm_client import LLMClient
+from offle_assistant.vector_db import (
+    VectorDB,
+)
+from offle_assistant.dependencies import get_vector_db, get_llm_client
 
 personas_router = APIRouter()
 
@@ -118,9 +123,11 @@ class ChatRequest(BaseModel):
 
 @personas_router.post("/chat/{persona_id}")
 async def chat_with_persona(
-        persona_id: PyObjectId,
-        chat_request: ChatRequest,
-        user_model: UserModel = Depends(get_current_user),
+    persona_id: PyObjectId,
+    chat_request: ChatRequest,
+    user_model: UserModel = Depends(get_current_user),
+    llm_client: LLMClient = Depends(get_llm_client),
+    vector_db: VectorDB = Depends(get_vector_db)
 ):
     """Allows any user to chat with a persona."""
 
@@ -153,8 +160,13 @@ async def chat_with_persona(
             status_code=400, detail="Message content is required"
         )
 
-    # Placeholder for now. Eventually this will be a Persona.chat() response.
-    bot_response = f"{persona.name} says: 'Hello, you said: {user_message}'"
+    chat_response: PersonaChatResponse = persona.chat(
+        user_response=user_message,
+        stream=False,
+        perform_rag=True,
+        llm_client=llm_client,
+        vector_db=vector_db
+    )
 
     SessionManager.save_persona_instance(
         user_id=user_id,
@@ -163,4 +175,8 @@ async def chat_with_persona(
         persona=persona
     )
 
-    return {"persona_id": persona_id, "response": bot_response}
+    return {
+        "persona_id": persona_id,
+        "response": chat_response.chat_response,
+        "rag_hit": chat_response.rag_response,
+    }
