@@ -20,15 +20,15 @@ async def create_user_in_db(new_user: UserModel) -> ObjectId:
 async def create_persona_in_db(
     persona: PersonaModel,
     creator_id: str
-) -> ObjectId:
-    """Insert a new persona into the database and return its ID."""
+) -> str: 
+    """Insert a new persona into the database and return its ID as a string."""
 
     persona_data = persona.dict()
-    persona_data["creator_id"] = ObjectId(creator_id)  # Ensure ObjectId format
-    persona_data["user_id"] = ObjectId(creator_id)  # Keep consistency
+    persona_data["creator_id"] = ObjectId(creator_id) 
+    persona_data["user_id"] = ObjectId(creator_id)  
 
-    return await personas_collection.insert_one(persona_data).inserted_id
-
+    result = await personas_collection.insert_one(persona_data)  
+    return str(result.inserted_id) 
 
 async def update_persona_in_db(persona_id: str, updates: dict) -> UpdateResult:
     updated = await personas_collection.update_one(

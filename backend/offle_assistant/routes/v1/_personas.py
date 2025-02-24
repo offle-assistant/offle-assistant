@@ -21,16 +21,18 @@ async def get_user_personas(user: dict = Depends(get_current_user)):
     return await get_personas_by_user_id(user["_id"])
 
 
+from fastapi.responses import JSONResponse
+
 @personas_router.post("/build")
 async def create_persona(
     persona: PersonaModel,
     user: dict = Depends(builder_required)
 ):
     """Allows a builder or admin to create a persona."""
-
+    
     # Ensure the user exists in the database
     creator_id = user["_id"]
-    existing_user = get_user_by_id(creator_id)
+    existing_user = await get_user_by_id(creator_id)
 
     if not existing_user:
         raise HTTPException(
@@ -39,18 +41,20 @@ async def create_persona(
 
     persona_id = await create_persona_in_db(persona, creator_id)
 
-    return {
-        "message": "Persona created successfully",
-        "persona_id": str(persona_id)
-    }
-
+    return JSONResponse(
+        content={
+            "message": "Persona created successfully",
+            "persona_id": str(persona_id)
+        },
+        status_code=201
+    )
 
 @personas_router.put("/build/{persona_id}")
 async def update_persona(
     persona_id: str,
     updates: PersonaUpdateModel,
     user: dict = Depends(builder_required)
-):
+) :
     """
         Allows builders to update their own personas
         and admins to update any persona.
