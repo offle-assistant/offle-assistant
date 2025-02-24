@@ -33,6 +33,30 @@ async def get_message_history_entry_by_id(
     )
 
 
+async def get_message_history_list_by_user_id(
+    user_id: str,
+    persona_id: str
+) -> Optional[Dict]:
+    query = {"_id": ObjectId(user_id)}
+    projection = {f"persona_message_history.{persona_id}": 1}
+
+    retrieved_user: list = await users_collection.find_one(
+        query,
+        projection
+    )
+
+    if not retrieved_user:
+        # Couldn't find a user by that id.
+        return None
+
+    message_history = retrieved_user.get(
+        "persona_message_history",
+        {}
+    ).get(persona_id, [])
+
+    return message_history
+
+
 async def get_personas_by_creator_id(user_id: str) -> Dict[str, str]:
     """
         Fetch all personas owned by a given user

@@ -4,6 +4,7 @@ from ._queries import (
     get_user_by_email,
     get_persona_by_id,
     get_message_history_entry_by_id,
+    get_message_history_list_by_user_id
 )
 from ._crud import (
     create_persona_in_db,
@@ -27,5 +28,6 @@ __all__ = [
     "create_user_in_db",
     "get_message_history_entry_by_id",
     "create_message_history_entry_in_db",
-    "update_message_history_entry_in_db"
+    "update_message_history_entry_in_db",
+    "get_message_history_list_by_user_id"
 ]

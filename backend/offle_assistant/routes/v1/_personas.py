@@ -17,7 +17,8 @@ from offle_assistant.database import (
     create_persona_in_db,
     get_persona_by_id,
     update_persona_in_db,
-    create_message_history_entry_in_db
+    create_message_history_entry_in_db,
+    get_message_history_list_by_user_id
 )
 from offle_assistant.session_manager import SessionManager
 
@@ -25,10 +26,16 @@ personas_router = APIRouter()
 
 
 @personas_router.get("/owned")
-async def get_user_personas(user: UserModel = Depends(get_current_user)):
+async def get_user_personas(user_model: UserModel = Depends(get_current_user)):
     """Returns a dictionary of all personas created by the logged-in user."""
 
-    return await get_personas_by_creator_id(user["_id"])
+    # This is a dict {"persona_id": "persona_name"}
+    user_personas = await get_personas_by_creator_id(user_model.id)
+
+    return {
+        "user_id": user_model.id,
+        "persona_dict": user_personas
+    }
 
 
 @personas_router.post("/build")
@@ -83,6 +90,24 @@ async def update_persona(
         raise HTTPException(status_code=400, detail="No changes made")
 
     return {"message": "Persona updated successfully"}
+
+
+@personas_router.get("/message-history/{persona_id}")
+async def get_persona_message_history(
+    persona_id: str,
+    user_model: UserModel = Depends(get_current_user),
+):
+    user_id = user_model.id
+    message_history_id_list: list = get_message_history_list_by_user_id(
+        user_id=user_id,
+        persona_id=persona_id
+    )
+
+    return {
+        "persona_id": persona_id,
+        "user_id": user_id,
+        "message_history": message_history_id_list,
+    }
 
 
 # Request body model
