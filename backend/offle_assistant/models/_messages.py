@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from bson.objectid import ObjectId
 
-from ._common_utils import PyObjectId
+# from ._common_utils import PyObjectId
 
 
 class MessageContent(BaseModel):
@@ -14,12 +14,18 @@ class MessageContent(BaseModel):
 
 
 class MessageHistoryModel(BaseModel):
-    id: Optional[PyObjectId] = Field(alias="_id", default=None)  # MongoDB _id
-    user_id: PyObjectId  # User reference
-    persona_id: PyObjectId  # Persona reference
+    id: Optional[str] = Field(alias="_id", default=None)  # MongoDB _id
+    title: str = Field(..., min_length=3, max_length=50)
+    description: str = Field(..., min_length=3, max_length=50)
     messages: List[MessageContent] = []  # List of message objects
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
         from_attributes = True
         json_encoders = {ObjectId: str}
+
+
+class MessageHistoryUpdateModel(BaseModel):
+    title: Optional[str] = Field(None, min_length=3, max_length=50)
+    description: Optional[str] = Field(None, min_length=3, max_length=50)
+    messages: Optional[List[MessageContent]] = None  # List of message objects

@@ -11,3 +11,4 @@ client = AsyncIOMotorClient(MONGO_URI)
 db = client["offle_assistant"]
 personas_collection = db["personas"]
 users_collection = db["users"]
+message_history_collection = db["message_history"]

@@ -71,24 +71,6 @@ async def chat_endpoint(
 
 
 ########################################################################
-# Begin database update code
-########################################################################
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-def get_current_user():
-    # I need to figure out how to handle this :P
-    return {"user_id": 3}
-
-
-########################################################################
     # User Updates
     ####################################################################
 
@@ -114,18 +96,6 @@ async def get_user(user_id: str):
     user["_id"] = str(user["_id"])  # Convert Mongo ObjectId to string
     return user
 
-
-# @router.delete("/users/{user_id}")
-# async def delete_user(user_id: int, db: Session = Depends(get_db)):
-#     db_user = db.query(User).filter(User.user_id == user_id).first()
-#     if not db_user:
-#         raise HTTPException(status_code=404, detail="User not found")
-#
-#     db.delete(db_user)
-#     db.commit()
-#     return {"message": "User deleted successfully"}
-
-
 ########################################################################
     # Persona Updates
     ####################################################################
@@ -147,70 +117,3 @@ async def create_persona(persona: Persona):
     )
 
     return {"message": "Persona created successfully"}
-
-
-@router.get("/personas/{user_id}")
-async def get_personas(user_id: str):
-    """Fetch all personas for a specific user."""
-    personas = await personas_collection.find(
-        {"user_id": user_id}
-    ).to_list(None)
-    return personas
-
-
-# @router.patch("/personas/{persona_id}", response_model=PersonaOut)
-# async def update_persona(
-#     persona_id: int,
-#     persona_update: PersonaUpdate,
-#     current_user: dict = Depends(get_current_user),
-#     db: Session = Depends(get_db)
-# ):
-#     db_persona = db.query(PersonaModel).filter(
-#         PersonaModel.persona_id == persona_id
-#     ).first()
-# 
-#     if not db_persona:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="Persona not found"
-#         )
-# 
-#     if db_persona.user_id != current_user["user_id"]:
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="Not authorized to update this persona"
-#         )
-# 
-#     if persona_update.persona_name is not None:
-#         db_persona.persona_name = persona_update.persona_name
-#     if persona_update.persona_config is not None:
-#         db_persona.persona_config = persona_update.persona_config.dict()
-# 
-#     db.commit()
-#     db.refresh(db_persona)
-# 
-#     return db_persona
-# 
-# 
-# @router.delete("/personas/{persona_id}")
-# async def delete_persona(
-#     persona_id: int,
-#     current_user: dict = Depends(get_current_user),
-#     db: Session = Depends(get_db)
-# ):
-#     db_persona = db.query(PersonaModel).filter(
-#         PersonaModel.persona_id == persona_id
-#     ).first()
-# 
-#     if not db_persona:
-#         raise HTTPException(status_code=404, detail="Persona not found")
-# 
-#     if db_persona.user_id != current_user["user_id"]:
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="Not authorized to update this persona"
-#         )
-# 
-#     db.delete(db_persona)
-#     db.commit()
-#     return {"message": "User deleted successfully"}

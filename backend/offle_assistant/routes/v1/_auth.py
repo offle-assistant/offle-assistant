@@ -38,12 +38,12 @@ async def register_user(user: AuthModel, role: Role = "user"):
     )
 
     # Plug the user into the database
-    inserted_user = await create_user_in_db(new_user)
+    inserted_id = await create_user_in_db(new_user)
 
     # return a success message with the newly created id
     return {
         "message": "User registered",
-        "user_id": str(inserted_user.inserted_id)
+        "user_id": str(inserted_id)
     }
 
 

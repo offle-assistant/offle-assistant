@@ -5,6 +5,7 @@ from bson import ObjectId
 from offle_assistant.mongo import (
     personas_collection,
     users_collection,
+    message_history_collection
 )
 
 
@@ -23,7 +24,16 @@ async def get_persona_by_id(persona_id: str) -> Optional[Dict]:
     return await personas_collection.find_one({"_id": ObjectId(persona_id)})
 
 
-async def get_personas_by_user_id(user_id: str) -> Dict[str, str]:
+async def get_message_history_entry_by_id(
+    message_history_id: str
+) -> Optional[Dict]:
+    """Get a message history object"""
+    return await message_history_collection.find_one(
+        {"_id": ObjectId(message_history_id)}
+    )
+
+
+async def get_personas_by_creator_id(user_id: str) -> Dict[str, str]:
     """
         Fetch all personas owned by a given user
         and return as {persona_id: persona_name}.
