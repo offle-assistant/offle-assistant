@@ -163,7 +163,7 @@ async def chat_with_persona(
     chat_response: PersonaChatResponse = persona.chat(
         user_response=user_message,
         stream=False,
-        perform_rag=True,
+        perform_rag=False,
         llm_client=llm_client,
         vector_db=vector_db
     )

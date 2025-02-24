@@ -4,7 +4,7 @@ import redis
 from bson import ObjectId
 
 from offle_assistant.persona import Persona
-from offle_assistant.models import PersonaModel
+from offle_assistant.models import PersonaModel, MessageHistoryModel
 from offle_assistant.database import (
     get_persona_by_id,
     get_message_history_entry_by_id
@@ -35,14 +35,19 @@ class SessionManager:
         persona_dict["user_id"] = str(persona_dict["user_id"])
         persona_dict["creator_id"] = str(persona_dict["creator_id"])
         persona_model: PersonaModel = PersonaModel(**persona_dict)
-        message_chain = await get_message_history_entry_by_id(
+        message_history_dict = await get_message_history_entry_by_id(
             message_history_id
+        )
+
+        message_history_dict["_id"] = str(message_history_dict["_id"])
+        message_history_model: MessageHistoryModel = MessageHistoryModel(
+            **message_history_dict
         )
 
         # If persona doesn't exist, create a new one
         new_persona: Persona = Persona(
             persona_model=persona_model,
-            message_chain=message_chain  # We will set this at some point...
+            message_chain=message_history_model.messages
         )
 
         serialized_persona = pickle.dumps(new_persona)
