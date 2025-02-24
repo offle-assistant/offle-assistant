@@ -177,6 +177,7 @@ async def chat_with_persona(
 
     return {
         "persona_id": persona_id,
+        "message_history_id": str(message_history_id),
         "response": chat_response.chat_response,
         "rag_hit": chat_response.rag_response,
     }
