@@ -15,8 +15,12 @@ class MessageContent(BaseModel):
 
 class MessageHistoryModel(BaseModel):
     id: Optional[str] = Field(alias="_id", default=None)  # MongoDB _id
-    title: str = Field(..., min_length=3, max_length=50)
-    description: str = Field(..., min_length=3, max_length=50)
+    title: str = Field(default="Default title", min_length=3, max_length=50)
+    description: str = Field(
+        default="Default Description",
+        min_length=3,
+        max_length=50
+    )
     messages: List[MessageContent] = []  # List of message objects
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
