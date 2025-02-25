@@ -4,6 +4,81 @@
 
 ---
 
+## Get a persona model by persona\_id
+
+GET /personas/{persona\_id}
+
+### Description
+
+This retrieves the persona model by ID.
+
+### Headers / Authentication
+
+* Authorization: Bearer token for a logged in user.
+
+### Response
+
+* 200 OK
+    * Body:
+
+```
+    {
+      "persona_id": "54321",
+      "message_history_id": "12345",
+      "response": "I can help you by analyzing target demographics, refining brand messaging, and suggesting campaign strategies.",
+      "rag_hit": {
+        "file_name": "important document",
+        "doc_path": "path/to/document.md",
+        "document_string": "This is very important information right here.",
+        "euclidean_distance": "0.4",
+        "cosine_similarity": "0.6",
+        "success": "true"
+      }
+    }
+```
+
+* 404 Not Found
+    * Body:
+    ```
+    {
+      "detail": "Persona not found"
+    }
+
+    ```
+
+* 500 Internal Server Error
+    * Body:
+    ```
+    {
+      "detail": "Invalid persona data in DB: <validation_error_details>"
+    }
+
+    ```
+
+### Example Request
+    ```
+    GET /personas/abc123
+    Authorization: Bearer <valid_jwt_token>
+
+    ```
+
+### Example Response
+```
+    {
+      "persona_id": "54321",
+      "message_history_id": "12345",
+      "response": "I can help you by analyzing target demographics, refining brand messaging, and suggesting campaign strategies.",
+      "rag_hit": {
+        "file_name": "important document",
+        "doc_path": "path/to/document.md",
+        "document_string": "This is very important information right here.",
+        "euclidean_distance": "0.4",
+        "cosine_similarity": "0.6",
+        "success": "true"
+      }
+    }
+```
+
 ## Get all personas created by the current user
 
 GET /personas/owned
@@ -15,7 +90,7 @@ Retrieves all personas associated with the currently authenticated user as creat
 
 ### Headers / Authentication
 
-* Authorization: Bearer token containing admin privileges.
+* Authorization: Bearer token for a logged in user.
 
 ### Responses
 
@@ -59,7 +134,7 @@ Requires providing the creator\_id (and other fields) in the request body.
 
 ### Headers / Authentication
 
-* Authorization: Bearer token containing admin privileges.
+* Authorization: Bearer token containing admin or builder privileges.
 
 ### Request Body
 
