@@ -1,7 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from offle_assistant.auth import builder_required, get_current_user
 from offle_assistant.models import (
@@ -41,6 +41,31 @@ async def get_user_personas(user_model: UserModel = Depends(get_current_user)):
         "user_id": user_model.id,
         "persona_dict": user_personas
     }
+
+
+@personas_router.get("/{persona_id}", response_model=PersonaModel)
+async def get_persona(
+    persona_id: str,
+    user_model: UserModel = Depends(get_current_user)
+):
+    """Returns a persona by id."""
+
+    persona_dict: dict = await get_persona_by_id(persona_id)
+    if not persona_dict:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    try:
+        persona_dict["_id"] = str(persona_dict["_id"])
+        persona_dict["creator_id"] = str(persona_dict["creator_id"])
+        persona_dict["user_id"] = str(persona_dict["user_id"])
+        persona_model: PersonaModel = PersonaModel(**persona_dict)
+    except ValidationError as e:
+        # Handle or log the validation error as needed
+        raise HTTPException(
+            status_code=500, detail=f"Invalid persona data in DB: {e}"
+        )
+
+    return persona_model
 
 
 @personas_router.post("/build")
