@@ -103,7 +103,7 @@ async def get_persona_message_history(
     user_model: UserModel = Depends(get_current_user),
 ):
     user_id = user_model.id
-    message_history_id_list: list = get_message_history_list_by_user_id(
+    message_history_list: list = get_message_history_list_by_user_id(
         user_id=user_id,
         persona_id=persona_id
     )
@@ -111,7 +111,7 @@ async def get_persona_message_history(
     return {
         "persona_id": persona_id,
         "user_id": user_id,
-        "message_history": message_history_id_list,
+        "message_history": message_history_list,
     }
 
 
