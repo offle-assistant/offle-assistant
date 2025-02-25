@@ -11,5 +11,6 @@ async def get_current_user_profile(user: dict = Depends(get_current_user)):
     return {
         "user_id": str(user["_id"]),
         "email": user["email"],
-        "username": user["username"]
+        "username": user["username"],
+        "personas": user["personas"],
     }
