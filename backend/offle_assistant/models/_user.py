@@ -1,13 +1,17 @@
 from datetime import datetime
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Dict
 
 from bson import ObjectId
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, RootModel
 
 from ._common_utils import PyObjectId
 
 
 Role = Literal["user", "admin", "builder"]
+
+
+class PersonaMessageHistoryMap(RootModel[Dict[PyObjectId, List[PyObjectId]]]):
+    pass
 
 
 class UserModel(BaseModel):
@@ -17,6 +21,9 @@ class UserModel(BaseModel):
     email: EmailStr
     hashed_password: str
     personas: List[PyObjectId] = []
+    persona_message_history: PersonaMessageHistoryMap = Field(
+        default_factory=lambda: PersonaMessageHistoryMap(root={})
+    )
     # If no "created_at" is provided, it's a new user. use the current utc time
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

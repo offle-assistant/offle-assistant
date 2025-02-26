@@ -4,12 +4,13 @@ from jose import JWTError, jwt
 from bson import ObjectId
 
 from ._utils import SECRET_KEY, ALGORITHM
-from offle_assistant.mongo import users_collection
+from offle_assistant.database import get_user_by_id
+from offle_assistant.models import UserModel
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserModel:
     """Extracts user from JWT token & verifies authentication."""
     credentials_exception = HTTPException(
         status_code=401,
@@ -18,7 +19,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("user_id")
+        user_id: str = str(payload.get("user_id"))
         if not user_id:
             raise credentials_exception
     except jwt.ExpiredSignatureError:
@@ -26,23 +27,30 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except jwt.JWTError:
         raise credentials_exception
 
-    user = await users_collection.find_one({"_id": ObjectId(user_id)})
-    if not user:
+    user_dict = await get_user_by_id(user_id)
+    if not user_dict:
         raise credentials_exception
 
-    return user
+    user_dict["_id"] = str(user_dict["_id"])
+    user_model = UserModel(**user_dict)
+
+    return user_model
 
 
-async def admin_required(user: dict = Depends(get_current_user)):
+async def admin_required(
+    user: UserModel = Depends(get_current_user)
+) -> UserModel:
     """Ensures only admins can access a route."""
-    if user.get("role") != "admin":
+    if user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
 
-async def builder_required(user: dict = Depends(get_current_user)):
+async def builder_required(
+    user: UserModel = Depends(get_current_user)
+) -> UserModel:
     """Ensures only builders or admins can access a route."""
-    if user.get("role") not in ["builder", "admin"]:
+    if user.role not in ["builder", "admin"]:
         raise HTTPException(
             status_code=403,
             detail="Builder or admin access required"

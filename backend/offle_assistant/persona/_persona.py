@@ -44,12 +44,22 @@ class Persona:
         self.description: str = persona_model.description
         self.system_prompt: str = persona_model.system_prompt
         self.temperature: float = persona_model.temperature
-        self.query_threshold: Optional[float] = (
-            persona_model.rag.query_threshold
-        )
-        self.db_collections: List[str] = persona_model.rag.db_collections
-        self.query_metric: QueryMetric = persona_model.rag.query_metric
-        self.additional_rag_settings = persona_model.rag.additional_settings
+
+        if persona_model.rag is not None:
+            self.query_threshold: Optional[float] = (
+                persona_model.rag.query_threshold
+            )
+            self.db_collections: List[str] = persona_model.rag.db_collections
+            self.query_metric: QueryMetric = persona_model.rag.query_metric
+            self.additional_rag_settings = (
+                persona_model.rag.additional_settings
+            )
+        else:
+            self.query_threshold = None
+            self.db_collections = None
+            self.query_metric = None
+            self.additional_rag_settings = None
+
         self.message_chain: List[MessageContent] = message_chain
 
         if len(self.message_chain) <= 0:
