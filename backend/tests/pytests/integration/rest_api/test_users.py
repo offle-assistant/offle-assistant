@@ -5,34 +5,24 @@ import pytest
 from offle_assistant.main import app
 from offle_assistant.mongo import db
 
+from .common import create_test_user, login_user
+
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_get_user_by_id():
     async with AsyncClient(app=app, base_url="http://test") as client:
         await db.client.drop_database(db.name)
 
-        reg_user_payload = {
-            "email": "test_admin@example.com",
-            "password": "securepassword",
-        }
+        user_info = await create_test_user(client)
 
-        reg_user_response = await client.post(
-            "/auth/register", json=reg_user_payload
+        email = user_info["email"]
+        password = user_info["password"]
+
+        user_token = await login_user(
+            email=email,
+            password=password,
+            client=client
         )
-        assert reg_user_response.status_code == 200
-        data = reg_user_response.json()
-        assert data["message"] == "User registered"
-
-        login_response = await client.post(
-            "/auth/login", json=reg_user_payload
-        )
-
-        assert login_response.status_code == 200
-        data = login_response.json()
-        assert data["access_token"]
-        assert data["token_type"] == "bearer"
-
-        user_token = data["access_token"]
 
         headers = {"Authorization": f"Bearer {user_token}"}
 
@@ -40,4 +30,4 @@ async def test_get_user_by_id():
 
         assert get_user_response.status_code == 200
         data = get_user_response.json()
-        assert data["email"] == reg_user_payload["email"]
+        assert data["email"] == email

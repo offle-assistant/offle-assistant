@@ -3,6 +3,24 @@ from uuid import uuid1
 from offle_assistant.main import create_default_admin
 
 
+async def login_user(
+    email,
+    password,
+    client
+) -> str:
+    """ Logs in a user, returns the auth token """
+    login_user_payload = {"email": email, "password": password}
+
+    login_response = await client.post(
+        "/auth/login", json=login_user_payload
+    )
+
+    data = login_response.json()
+
+    user_token = data["access_token"]
+    return user_token
+
+
 async def create_test_user(client) -> str:
     uuid_str = uuid1()
     user_email = f"{uuid_str}@example.com"

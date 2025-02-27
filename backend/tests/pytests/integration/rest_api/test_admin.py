@@ -5,7 +5,11 @@ import pytest
 from offle_assistant.main import app, create_default_admin
 from offle_assistant.mongo import db
 
-from .common import create_test_user, get_default_admin_token
+from .common import (
+    create_test_user,
+    get_default_admin_token,
+    login_user
+)
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -38,26 +42,17 @@ async def test_user_delete_auth_failure():
         user_1_email = user_1_info["email"]
         user_1_password = user_1_info["password"]
 
-        login_payload = {
-            "email": user_1_email,
-            "password": user_1_password
-        }
-
         # Create the user who we're going to try to delete
         user_2_info = await create_test_user(client)
         user_2_id = user_2_info["user_id"]
 
         # Attempt the delete
-        login_response = await client.post(
-            "/auth/login", json=login_payload
+        login_token = await login_user(
+            email=user_1_email,
+            password=user_1_password,
+            client=client
         )
 
-        assert login_response.status_code == 200
-        data = login_response.json()
-        assert data["access_token"]
-        assert data["token_type"] == "bearer"
-
-        login_token = data["access_token"]
         headers = {"Authorization": f"Bearer {login_token}"}
         del_user_response = await client.delete(
             f"/admin/users/{user_2_id}/delete",
@@ -143,13 +138,11 @@ async def test_promote_user_failure_not_admin():
         auth_email = auth_user_info["email"]
         auth_password = auth_user_info["password"]
 
-        auth_payload = {"email": auth_email, "password": auth_password}
-
-        login_response = await client.post(
-            "/auth/login", json=auth_payload
+        auth_token = await login_user(
+            email=auth_email,
+            password=auth_password,
+            client=client
         )
-        data = login_response.json()
-        auth_token = data["access_token"]
 
         new_role = "admin"
         headers = {"Authorization": f"Bearer {auth_token}"}
