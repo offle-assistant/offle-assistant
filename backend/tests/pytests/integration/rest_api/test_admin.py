@@ -1,10 +1,11 @@
 from httpx import AsyncClient
-from uuid import uuid1
 
 import pytest
 
 from offle_assistant.main import app, create_default_admin
 from offle_assistant.mongo import db
+
+from .common import create_test_user, get_default_admin_token
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -25,40 +26,6 @@ async def test_default_admin():
         data = login_response.json()
         assert data["access_token"]
         assert data["token_type"] == "bearer"
-
-
-async def create_test_user(client) -> str:
-    uuid_str = uuid1()
-    user_email = f"{uuid_str}@example.com"
-    password = "securepassword"
-
-    reg_user_payload = {
-        "email": user_email,
-        "password": password,
-    }
-
-    reg_user_response = await client.post(
-        "/auth/register", json=reg_user_payload)
-    data = reg_user_response.json()
-    return {
-        "user_id": data["user_id"],
-        "email": user_email,
-        "password": password
-    }
-
-
-async def get_default_admin_token(client) -> str:
-    await create_default_admin()
-    default_admin_payload = {
-        "email": "admin@admin.com",
-        "password": "admin",
-    }
-    login_response = await client.post(
-        "/auth/login", json=default_admin_payload
-    )
-
-    data = login_response.json()
-    return data["access_token"]
 
 
 @pytest.mark.asyncio(loop_scope="session")
