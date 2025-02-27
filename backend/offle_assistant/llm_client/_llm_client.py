@@ -16,12 +16,16 @@ class LLMClient:
     def __init__(
         self,
         ollama_server_config: LLMServerConfig,
+        model_list: List[str]
     ):
         ollama_server_url = (
             f'http://{ollama_server_config.hostname}:'
             f'{ollama_server_config.port}'
         )
         self.ollama_client = ollama.Client(ollama_server_url)
+
+        for model in model_list:
+            self.ollama_client.pull(model)
 
     def chat(
         self,
@@ -45,6 +49,7 @@ class LLMClient:
         message_chain: dict,
         stream: bool = False,
     ) -> Union[str, Generator[str, None, None]]:
+
         chat_response: ChatResponse = self.ollama_client.chat(
             model=model,
             messages=message_chain,

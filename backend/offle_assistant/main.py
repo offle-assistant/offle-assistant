@@ -51,7 +51,11 @@ app.include_router(personas_router, prefix="/personas", tags=["Personas"])
 
 # Store in `app.state`
 app.state.llm_server: LLMClient = LLMClient(
-    LLMServerConfig(hostname="localhost", port=11434)
+    LLMServerConfig(
+        hostname="localhost",
+        port=11435,
+    ),
+    model_list=["llama3.2"]
 )
 
 app.state.vector_db: VectorDB = QdrantDB(
