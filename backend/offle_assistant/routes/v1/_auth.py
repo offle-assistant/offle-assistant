@@ -22,7 +22,7 @@ class AuthModel(BaseModel):
 
 
 @auth_router.post("/register")
-async def register_user(user: AuthModel, role: Role = "user"):
+async def register_user(user: AuthModel):
     """Registers a new user with hashed password."""
     existing_user = await users_collection.find_one({"email": user.email})
     if existing_user:  # Checks if a user exists by email
@@ -34,7 +34,7 @@ async def register_user(user: AuthModel, role: Role = "user"):
         email=user.email,
         hashed_password=hashed_password,
         username=user.email.split("@")[0],
-        role=role
+        role="user"
     )
 
     # Plug the user into the database

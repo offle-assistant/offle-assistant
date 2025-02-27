@@ -17,6 +17,12 @@ from offle_assistant.routes.v1 import (
     admin_router,
     personas_router
 )
+from offle_assistant.database import (
+    create_user_in_db,
+    get_admin_exists
+)
+from offle_assistant.models import (UserModel)
+from offle_assistant.auth import hash_password
 
 app = FastAPI()
 
@@ -64,6 +70,25 @@ app.state.vector_db: VectorDB = QdrantDB(
         port=6333
     )
 )
+
+
+@app.on_event("startup")
+async def create_default_admin():
+    admin_exists = await get_admin_exists()
+    if not admin_exists:
+        print("Admin account does not yet exist. Creating default account...")
+        email = "admin@admin.com"
+
+        # Create the default admin user
+        default_admin = UserModel(
+            email=email,
+            hashed_password=hash_password("admin"),
+            username="admin",
+            role="admin"
+        )
+        await create_user_in_db(default_admin)
+    else:
+        print("Admin account already exists")
 
 
 @app.options("/{full_path:path}")
