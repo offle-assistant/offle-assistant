@@ -22,7 +22,9 @@ type Persona = {
 type Message = {
   sender: string;
   content: string;
+  message_history_id?: string; // Optional, since it's used for tracking history
 };
+
 
 const ChatPage: React.FC = () => {
   const [personas, setPersonas] = useState<Persona[]>([]);
@@ -64,25 +66,56 @@ const ChatPage: React.FC = () => {
   // Fetch message history for the selected persona
   const fetchMessageHistory = async (personaId: string) => {
     try {
-      const res = await api.get<{ message_history: Message[] }>(`/personas/message-history/${personaId}`);
-      setMessages(res.data.message_history);
+        const res = await api.get<{ message_history: Message[] }>(`/personas/message-history/${personaId}`);
+
+        if (!res.data || !Array.isArray(res.data.message_history)) {
+            throw new Error("Invalid message history response");
+        }
+
+        // Map messages to ensure a consistent format
+        const formattedMessages: Message[] = res.data.message_history.map((msg) => ({
+            sender: msg.sender ?? "AI",
+            content: msg.content ?? "No content",
+            message_history_id: msg.message_history_id, // Track message history
+        }));
+
+        console.log("Fetched Message History:", formattedMessages);
+
+        setMessages(formattedMessages);
     } catch (err) {
-      console.error("Failed to fetch message history:", err);
+        console.error("Failed to fetch message history:", err);
     }
-  };
+};
+
+
 
   // Handle sending a message
   const sendMessage = async () => {
     if (!selectedPersona || !messageContent.trim()) return;
+
     try {
-      const res = await api.post(`/personas/chat/${selectedPersona.id}`, { content: messageContent });
-      setMessages((prevMessages) => [...prevMessages, { sender: "You", content: messageContent }]);
-      setMessages((prevMessages) => [...prevMessages, { sender: "AI", content: res.data.response }]);
-      setMessageContent("");
+        // Ensure a message history ID is present
+        const messageHistoryId = messages.length > 0 ? messages[0].message_history_id : null;
+
+        const res = await api.post(`/personas/chat/${selectedPersona.id}`, {
+            message_history_id: messageHistoryId, // Ensure continuity in chat history
+            content: messageContent,
+        });
+
+        // Append user message and AI response to chat
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { sender: "You", content: messageContent },
+            { sender: "AI", content: res.data.response, message_history_id: res.data.message_history_id },
+        ]);
+
+        setMessageContent(""); // Clear input field
     } catch (err) {
-      console.error("Failed to send message:", err);
+        console.error("Failed to send message:", err);
     }
-  };
+};
+
+
 
   useEffect(() => {
     fetchPersonas();
@@ -196,35 +229,35 @@ const ChatPage: React.FC = () => {
             </Box>
 
                         {/* Input and Send Button */}
-            <Box sx={{ display: "flex", gap: 1, mt: 2, pb: 2, position: "relative" }}>
-            <TextField
-                fullWidth
-                variant="outlined"
-                placeholder="Type a message..."
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-                sx={{
-                bgcolor: "white",
-                borderRadius: "8px",
-                "& .MuiOutlinedInput-root": {
-                    padding: "10px",
-                },
-                }}
-            />
-            <Button
-                variant="contained"
-                sx={{
-                bgcolor: "#4CAF50",
-                color: "white",
-                height: "100%",
-                px: 3, // Padding inside the button
-                }}
-                onClick={sendMessage}
-            >
-                Send
-            </Button>
+              <Box sx={{ display: "flex", gap: 1, pb: 2, position: "relative", alignItems: "center" }}>
+                <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Type a message..."
+                    value={messageContent}
+                    onChange={(e) => setMessageContent(e.target.value)}
+                    sx={{
+                        bgcolor: "white",
+                        borderRadius: "8px",
+                        "& .MuiOutlinedInput-root": {
+                            padding: "10px",
+                        },
+                    }}
+                />
+                <Button
+                    variant="contained"
+                    sx={{
+                        bgcolor: "#4CAF50",
+                        color: "white",
+                        height: "100%",
+                        px: 3, // Padding inside the button
+                        whiteSpace: "nowrap", // Prevents button text from wrapping
+                    }}
+                    onClick={sendMessage}
+                >
+                    Send
+                </Button>
             </Box>
-
           </>
         ) : (
           <Typography variant="h5" sx={{ textAlign: "center", mt: 10, color: "gray" }}>
