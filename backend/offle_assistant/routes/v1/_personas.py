@@ -77,12 +77,6 @@ async def create_persona(
 
     # Ensure the user exists in the database
     creator_id = user.id
-    existing_user = await get_user_by_id(creator_id)
-
-    if not existing_user:
-        raise HTTPException(
-            status_code=400, detail="Invalid user_id: User does not exist"
-        )
 
     persona_id = await create_persona_in_db(persona, creator_id)
 
