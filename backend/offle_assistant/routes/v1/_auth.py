@@ -54,17 +54,17 @@ async def login_user(user: AuthModel):
     # Find user by email
     db_user = await get_user_by_email(user.email)
 
-    # Check if the user query returned a hit and verify password
-    if not db_user or not verify_password(
-        user.password, db_user["hashed_password"]
-    ):
+    # Check if the user exists and verify password
+    if not db_user or not verify_password(user.password, db_user["hashed_password"]):
         raise HTTPException(
             status_code=401,
             detail="Invalid email or password"
         )
 
-    # Authentication was successful so create an access token
+    # Include role in the JWT payload
     access_token = create_access_token(
-        {"user_id": str(db_user["_id"])}, expires_delta=timedelta(minutes=30)
+        {"user_id": str(db_user["_id"]), "role": db_user["role"]}, 
+        expires_delta=timedelta(minutes=30)
     )
+
     return {"access_token": access_token, "token_type": "bearer"}
