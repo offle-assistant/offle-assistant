@@ -9,6 +9,14 @@ from offle_assistant.mongo import (
 )
 
 
+async def get_admin_exists() -> bool:
+    admin_user = await users_collection.find_one({"role": "admin"})
+    if admin_user:
+        return True
+    else:
+        return False
+
+
 async def get_user_by_id(user_id: str) -> Optional[Dict]:
     """Fetch a user from the database by their _id."""
     return await users_collection.find_one({"_id": ObjectId(user_id)})

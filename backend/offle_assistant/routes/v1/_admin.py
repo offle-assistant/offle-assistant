@@ -12,7 +12,7 @@ admin_router = APIRouter()
 
 
 class RoleUpdateRequest(BaseModel):
-    new_role: Role
+    new_role: str
 
 
 @admin_router.delete("/users/{user_id}/delete")
@@ -37,7 +37,7 @@ async def update_user_role(
     if new_role not in Role.__args__:
         raise HTTPException(status_code=400, detail="Invalid role")
 
-    update_success = update_user_role_in_db(user_id, new_role)
+    update_success = await update_user_role_in_db(user_id, new_role)
 
     if update_success.modified_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
