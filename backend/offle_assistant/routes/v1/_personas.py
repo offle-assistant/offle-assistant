@@ -13,7 +13,7 @@ from offle_assistant.models import (
 from offle_assistant.persona import Persona, PersonaChatResponse
 from offle_assistant.database import (
     get_personas_by_creator_id,
-    get_user_by_id,
+    # get_user_by_id,
     create_persona_in_db,
     get_persona_by_id,
     update_persona_in_db,
@@ -101,7 +101,9 @@ async def update_persona(
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    if user_model.role != "admin" and persona["creator_id"] != user_model.id:
+    if user_model.role != "admin" and (
+        str(persona["creator_id"]) != str(user_model.id)
+    ):
         raise HTTPException(
             status_code=403, detail="You can only modify your own personas"
         )
@@ -122,7 +124,7 @@ async def get_persona_message_history(
     user_model: UserModel = Depends(get_current_user),
 ):
     user_id = user_model.id
-    message_history_list: list = get_message_history_list_by_user_id(
+    message_history_list: list = await get_message_history_list_by_user_id(
         user_id=user_id,
         persona_id=persona_id
     )
