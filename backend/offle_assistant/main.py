@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from contextlib import asynccontextmanager
 
 from offle_assistant.llm_client import LLMClient
 from offle_assistant.vector_db import (
@@ -24,7 +25,35 @@ from offle_assistant.database import (
 from offle_assistant.models import (UserModel)
 from offle_assistant.auth import hash_password
 
-app = FastAPI()
+
+async def create_default_admin():
+    admin_exists = await get_admin_exists()
+    if not admin_exists:
+        print("Admin account does not yet exist. Creating default account...")
+        email = "admin@admin.com"
+
+        # Create the default admin user
+        default_admin = UserModel(
+            email=email,
+            hashed_password=hash_password("admin"),
+            username="admin",
+            role="admin"
+        )
+        await create_user_in_db(default_admin)
+    else:
+        print("Admin account already exists")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await create_default_admin()
+
+    yield
+
+    pass
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")  # Ensure this allows GET requests
@@ -70,25 +99,6 @@ app.state.vector_db: VectorDB = QdrantDB(
         port=6333
     )
 )
-
-
-@app.on_event("startup")
-async def create_default_admin():
-    admin_exists = await get_admin_exists()
-    if not admin_exists:
-        print("Admin account does not yet exist. Creating default account...")
-        email = "admin@admin.com"
-
-        # Create the default admin user
-        default_admin = UserModel(
-            email=email,
-            hashed_password=hash_password("admin"),
-            username="admin",
-            role="admin"
-        )
-        await create_user_in_db(default_admin)
-    else:
-        print("Admin account already exists")
 
 
 @app.options("/{full_path:path}")
