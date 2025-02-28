@@ -1,6 +1,9 @@
 from uuid import uuid1
 
+from fastapi.encoders import jsonable_encoder
+
 from offle_assistant.main import create_default_admin
+from offle_assistant.models import PersonaModel
 
 
 async def login_user(
@@ -19,7 +22,6 @@ async def login_user(
 
     user_token = data["access_token"]
     return user_token
-
 
 
 async def get_test_user_token(client) -> str:
@@ -104,3 +106,24 @@ async def get_default_admin_token(client) -> str:
 
     data = login_response.json()
     return data["access_token"]
+
+
+async def create_persona(client, builder_token) -> str:
+
+    persona_model: PersonaModel = PersonaModel(
+        name="Rick",
+        description="Just a man.",
+    )
+    persona_model.created_at = jsonable_encoder(persona_model.created_at)
+    payload = persona_model.model_dump()
+
+    headers = {"Authorization": f"Bearer {builder_token}"}
+    create_response = await client.post(
+        "/personas/build",
+        json=payload,
+        headers=headers
+    )
+    create_data = create_response.json()
+    persona_id = create_data["persona_id"]
+
+    return persona_id
