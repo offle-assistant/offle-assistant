@@ -12,7 +12,12 @@ from offle_assistant.models import (
     PersonaModel,
     Role,
     UserModel,
-    MessageHistoryModel
+    MessageHistoryModel,
+    MessageContent
+)
+
+from ._queries import (
+    get_message_history_entry_by_id
 )
 
 
@@ -42,6 +47,15 @@ async def update_user_role_in_db(
     )
 
 
+async def update_user_in_db(user_id: str, updates: dict) -> UpdateResult:
+    updated = await users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": updates}
+    )
+
+    return updated
+
+
 async def create_message_history_entry_in_db(
     new_message_history_entry: Optional[MessageHistoryModel] = None
 ) -> ObjectId:
@@ -67,6 +81,25 @@ async def update_message_history_entry_in_db(
         {"$set": updates}
     )
     return update_success
+
+
+async def append_message_to_message_history_entry_in_db(
+    message_history_id: str,
+    message: MessageContent,
+):
+    message_history_entry: MessageHistoryModel = (
+        await get_message_history_entry_by_id(
+            message_history_id=message_history_id
+        )
+    )
+
+    message_history_entry["messages"].append(message)
+    success = await update_message_history_entry_in_db(
+        message_history_id=message_history_id,
+        updates=message_history_entry
+    )
+
+    return success
 
 
 async def create_persona_in_db(

@@ -8,7 +8,8 @@ from offle_assistant.models import (
     PersonaModel,
     PersonaUpdateModel,
     UserModel,
-    PyObjectId
+    PyObjectId,
+    MessageContent
 )
 from offle_assistant.persona import Persona, PersonaChatResponse
 from offle_assistant.database import (
@@ -18,7 +19,10 @@ from offle_assistant.database import (
     get_persona_by_id,
     update_persona_in_db,
     create_message_history_entry_in_db,
-    get_message_history_list_by_user_id
+    get_message_history_list_by_user_id,
+    update_message_history_entry_in_db,
+    append_message_to_message_history_entry_in_db,
+    update_user_in_db
 )
 from offle_assistant.session_manager import SessionManager
 from offle_assistant.llm_client import LLMClient
@@ -123,7 +127,7 @@ async def get_persona_message_history(
     persona_id: str,
     user_model: UserModel = Depends(get_current_user),
 ):
-    user_id = user_model.id
+    user_id = str(user_model.id)
     message_history_list: list = await get_message_history_list_by_user_id(
         user_id=user_id,
         persona_id=persona_id
@@ -159,11 +163,18 @@ async def chat_with_persona(
     if message_history_id is None:
         # If not, create a new entry in the message_history_collection
         message_history_id = await create_message_history_entry_in_db()
+
         # And then, ensure that there is a key for this persona_id on the user
-        user_model.persona_message_history.root.setdefault(persona_id, [])
+        user_model.persona_message_history.root.setdefault(str(persona_id), [])
+
         # append new message_history_id to persona_id key on user's msg hist
-        user_model.persona_message_history.root[persona_id].append(
-            message_history_id
+        user_model.persona_message_history.root[str(persona_id)].append(
+            str(message_history_id)
+        )
+
+        await update_user_in_db(
+            user_id=user_id,
+            updates=user_model.model_dump(),
         )
 
     persona: Persona = await SessionManager.get_persona_instance(
@@ -188,6 +199,16 @@ async def chat_with_persona(
         llm_client=llm_client,
         vector_db=vector_db
     )
+
+    most_recent_message: MessageContent = persona.message_chain[-1]
+    success = await append_message_to_message_history_entry_in_db(
+        message_history_id=message_history_id,
+        message=most_recent_message
+    )
+    if not success:
+        raise HTTPException(
+            status_code=500, detail="Could not update message history"
+        )
 
     SessionManager.save_persona_instance(
         user_id=user_id,

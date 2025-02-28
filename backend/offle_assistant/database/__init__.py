@@ -12,9 +12,11 @@ from ._crud import (
     update_persona_in_db,
     delete_user_in_db,
     update_user_role_in_db,
+    update_user_in_db,
     create_user_in_db,
     create_message_history_entry_in_db,
-    update_message_history_entry_in_db
+    update_message_history_entry_in_db,
+    append_message_to_message_history_entry_in_db
 )
 
 __all__ = [
@@ -31,5 +33,7 @@ __all__ = [
     "create_message_history_entry_in_db",
     "update_message_history_entry_in_db",
     "get_message_history_list_by_user_id",
-    "get_admin_exists"
+    "get_admin_exists",
+    "append_message_to_message_history_entry_in_db",
+    "update_user_in_db",
 ]
