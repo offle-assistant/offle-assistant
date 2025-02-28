@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 import pytest
 
@@ -8,7 +8,8 @@ from offle_assistant.mongo import db
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_register_user():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         await db.client.drop_database(db.name)
         payload = {
             "email": "test_user@example.com",
@@ -24,7 +25,8 @@ async def test_register_user():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_register_admin():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         await db.client.drop_database(db.name)
         payload = {
             "email": "test_user@example.com",
@@ -41,7 +43,8 @@ async def test_register_admin():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_login_user_success():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         await db.client.drop_database(db.name)
         payload = {
             "email": "test_user@example.com",
@@ -64,7 +67,8 @@ async def test_login_user_success():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_login_user_failure():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         await db.client.drop_database(db.name)
         payload = {
             "email": "test_user@example.com",
