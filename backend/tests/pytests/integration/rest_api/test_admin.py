@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 import pytest
 
@@ -15,7 +15,8 @@ from .common import (
 @pytest.mark.asyncio(loop_scope="session")
 async def test_default_admin():
     await create_default_admin()
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         default_admin_payload = {
             # "username": "admin",
             "email": "admin@admin.com",
@@ -34,7 +35,8 @@ async def test_default_admin():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_user_delete_auth_failure():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         await db.client.drop_database(db.name)
 
         # Create the user who is going to attempt a delete.
@@ -67,7 +69,8 @@ async def test_user_delete_auth_failure():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_user_delete_auth_success():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         user_info = await create_test_user(client)
         user_id = user_info["user_id"]
 
@@ -87,7 +90,8 @@ async def test_user_delete_auth_success():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_user_delete_user_id_does_not_exist():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         user_id = "63e4bcf5a79a8402ad3bb03b"
 
         admin_token = await get_default_admin_token(client)
@@ -107,7 +111,8 @@ async def test_user_delete_user_id_does_not_exist():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_promote_user_success():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         user_info = await create_test_user(client)
         user_id = user_info["user_id"]
 
@@ -130,7 +135,8 @@ async def test_promote_user_success():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_promote_user_failure_not_admin():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         user_info = await create_test_user(client)
         user_id = user_info["user_id"]
 
@@ -161,7 +167,8 @@ async def test_promote_user_failure_not_admin():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_promote_user_failure_no_user():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         user_id = "63e4bcf5a79a8402ad3bb03b"
 
         new_roles = ["admin", "builder"]
@@ -183,7 +190,8 @@ async def test_promote_user_failure_no_user():
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_promote_user_failure_invalid_role():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         user_info = await create_test_user(client)
         user_id = user_info["user_id"]
 

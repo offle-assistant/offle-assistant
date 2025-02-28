@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 import pytest
 
@@ -10,7 +10,8 @@ from .common import create_test_user, login_user
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_get_user_by_id():
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         await db.client.drop_database(db.name)
 
         user_info = await create_test_user(client)
