@@ -37,6 +37,30 @@ class UserModel(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc)
     )
 
+    @field_validator("id", mode="before")
+    @classmethod
+    def parse_id(cls, value):
+        if isinstance(value, PyObjectId):
+            return str(value)  # or raise ValueError if invalid
+        elif isinstance(value, ObjectId):
+            return str(value)  # or raise ValueError if invalid
+        return value
+
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def parse_timestamp(cls, value):
+        # Check for numeric timestamp
+        if isinstance(value, (int, float)):
+            return datetime.fromtimestamp(value, tz=timezone.utc)
+
+        # If value is already a string in ISO format, let Pydantic handle it
+        return value
+
+    @field_serializer("id")
+    def serialize_id(self, value: Optional[PyObjectId]) -> Optional[str]:
+        # Convert the ObjectId to its string representation if it's not None.
+        return None if value is None else str(value)
+
     @field_serializer("created_at")
     def serialize_timestamp(self, value: datetime | str) -> str:
         # If the value is a string, convert it to a datetime first.
@@ -48,13 +72,3 @@ class UserModel(BaseModel):
                 return value
 
         return value.isoformat()
-
-    @field_validator("created_at", mode="before")
-    @classmethod
-    def parse_timestamp(cls, value):
-        # Check for numeric timestamp
-        if isinstance(value, (int, float)):
-            return datetime.fromtimestamp(value, tz=timezone.utc)
-
-        # If value is already a string in ISO format, let Pydantic handle it
-        return value

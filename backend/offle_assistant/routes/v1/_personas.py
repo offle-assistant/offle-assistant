@@ -59,9 +59,9 @@ async def get_persona(
         raise HTTPException(status_code=404, detail="Persona not found")
 
     try:
-        persona_dict["_id"] = str(persona_dict["_id"])
-        persona_dict["creator_id"] = str(persona_dict["creator_id"])
-        persona_dict["user_id"] = str(persona_dict["user_id"])
+        # persona_dict["_id"] = str(persona_dict["_id"])
+        # persona_dict["creator_id"] = str(persona_dict["creator_id"])
+        # persona_dict["user_id"] = str(persona_dict["user_id"])
         persona_model: PersonaModel = PersonaModel(**persona_dict)
     except ValidationError as e:
         # Handle or log the validation error as needed
