@@ -114,7 +114,7 @@ app.state.vector_db: VectorDB = QdrantDB(
 @app.options("/{full_path:path}")
 async def preflight_handler(full_path: str):
     """Manually handle OPTIONS preflight requests for CORS."""
-    print(f"Received OPTIONS request for: {full_path}")
+    logging.info(f"Received OPTIONS request for: {full_path}")
     response = Response()
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
