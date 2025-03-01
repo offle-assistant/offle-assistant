@@ -45,6 +45,17 @@ This is the unique identifier for the user.
     ```
     Indicates that the user\_id doesn't exist in the database.
 
+* 403 Not Found
+
+    * Body:
+    ```
+    {
+      "detail": "Admin access required"
+    }
+
+    ```
+    Indicates that the user needs admin access to perform the delete.
+
 ### Example Request
     ```
     DELETE /users/123456/delete

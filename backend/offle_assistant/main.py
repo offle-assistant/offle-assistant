@@ -1,7 +1,11 @@
+import logging
+
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from contextlib import asynccontextmanager
 
+from offle_assistant.logging import logging_config
 from offle_assistant.llm_client import LLMClient
 from offle_assistant.vector_db import (
     VectorDB,
@@ -17,8 +21,49 @@ from offle_assistant.routes.v1 import (
     admin_router,
     personas_router
 )
+from offle_assistant.database import (
+    create_user_in_db,
+    get_admin_exists
+)
+from offle_assistant.models import (UserModel)
+from offle_assistant.auth import hash_password
 
-app = FastAPI()
+
+async def create_default_admin():
+    admin_exists = await get_admin_exists()
+    logging.info("Checking if Admin account exists...")
+    if not admin_exists:
+        logging.info(
+            "No admin account exists yet. Creating default account\n"
+            "email: admin@admin.com\n"
+            "password: admin\n"
+        )
+        email = "admin@admin.com"
+
+        # Create the default admin user
+        default_admin = UserModel(
+            email=email,
+            hashed_password=hash_password("admin"),
+            username="admin",
+            role="admin"
+        )
+        await create_user_in_db(default_admin)
+    else:
+        logging.info(
+            "Admin account already exists"
+        )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await create_default_admin()
+
+    yield
+
+    pass
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")  # Ensure this allows GET requests
@@ -69,7 +114,7 @@ app.state.vector_db: VectorDB = QdrantDB(
 @app.options("/{full_path:path}")
 async def preflight_handler(full_path: str):
     """Manually handle OPTIONS preflight requests for CORS."""
-    print(f"Received OPTIONS request for: {full_path}")
+    logging.info(f"Received OPTIONS request for: {full_path}")
     response = Response()
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
@@ -82,6 +127,8 @@ def start():
         "offle_assistant.main:app",
         host="0.0.0.0",
         port=8000,
+        log_config=logging_config,
+        log_level="info",
         reload=True
     )
 

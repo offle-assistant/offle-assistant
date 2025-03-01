@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional
 import jwt
 from passlib.context import CryptContext
@@ -28,7 +28,7 @@ def create_access_token(
 ) -> str:
     """Generates a JWT token with an expiration time."""
     to_encode = data.copy()
-    expire = datetime.utcnow() + (
+    expire = datetime.now(UTC) + (
         expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     to_encode.update({"exp": expire})

@@ -1,8 +1,15 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Literal, Dict
 
 from bson import ObjectId
-from pydantic import BaseModel, EmailStr, Field, RootModel
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    Field,
+    RootModel,
+    field_serializer,
+    field_validator
+)
 
 from ._common_utils import PyObjectId
 
@@ -15,6 +22,7 @@ class PersonaMessageHistoryMap(RootModel[Dict[PyObjectId, List[PyObjectId]]]):
 
 
 class UserModel(BaseModel):
+    model_config = {"from_attributes": True}
     id: Optional[PyObjectId] = Field(alias="_id", default=None)  # MongoDB _id
     username: str = Field(..., min_length=3, max_length=50)
     role: Role = Field(default="user")
@@ -25,8 +33,42 @@ class UserModel(BaseModel):
         default_factory=lambda: PersonaMessageHistoryMap(root={})
     )
     # If no "created_at" is provided, it's a new user. use the current utc time
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
-    class Config:
-        from_attributes = True
-        json_encoders = {ObjectId: str}
+    @field_validator("id", mode="before")
+    @classmethod
+    def parse_id(cls, value):
+        if isinstance(value, PyObjectId):
+            return str(value)  # or raise ValueError if invalid
+        elif isinstance(value, ObjectId):
+            return str(value)  # or raise ValueError if invalid
+        return value
+
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def parse_timestamp(cls, value):
+        # Check for numeric timestamp
+        if isinstance(value, (int, float)):
+            return datetime.fromtimestamp(value, tz=timezone.utc)
+
+        # If value is already a string in ISO format, let Pydantic handle it
+        return value
+
+    @field_serializer("id")
+    def serialize_id(self, value: Optional[PyObjectId]) -> Optional[str]:
+        # Convert the ObjectId to its string representation if it's not None.
+        return None if value is None else str(value)
+
+    @field_serializer("created_at")
+    def serialize_timestamp(self, value: datetime | str) -> str:
+        # If the value is a string, convert it to a datetime first.
+        if isinstance(value, str):
+            try:
+                value = datetime.fromisoformat(value)
+            except ValueError:
+                # return the value as-is
+                return value
+
+        return value.isoformat()

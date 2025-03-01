@@ -4,16 +4,19 @@ from ._queries import (
     get_user_by_email,
     get_persona_by_id,
     get_message_history_entry_by_id,
-    get_message_history_list_by_user_id
+    get_message_history_list_by_user_id,
+    get_admin_exists
 )
 from ._crud import (
     create_persona_in_db,
     update_persona_in_db,
     delete_user_in_db,
     update_user_role_in_db,
+    update_user_in_db,
     create_user_in_db,
     create_message_history_entry_in_db,
-    update_message_history_entry_in_db
+    update_message_history_entry_in_db,
+    append_message_to_message_history_entry_in_db
 )
 
 __all__ = [
@@ -29,5 +32,8 @@ __all__ = [
     "get_message_history_entry_by_id",
     "create_message_history_entry_in_db",
     "update_message_history_entry_in_db",
-    "get_message_history_list_by_user_id"
+    "get_message_history_list_by_user_id",
+    "get_admin_exists",
+    "append_message_to_message_history_entry_in_db",
+    "update_user_in_db",
 ]
