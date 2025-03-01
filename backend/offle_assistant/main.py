@@ -27,10 +27,12 @@ from offle_assistant.database import (
 )
 from offle_assistant.models import (UserModel)
 from offle_assistant.auth import hash_password
+from offle_assistant.dependencies import get_db
 
 
 async def create_default_admin():
-    admin_exists = await get_admin_exists()
+    db = get_db()
+    admin_exists = await get_admin_exists(db=db)
     logging.info("Checking if Admin account exists...")
     if not admin_exists:
         logging.info(
@@ -47,7 +49,7 @@ async def create_default_admin():
             username="admin",
             role="admin"
         )
-        await create_user_in_db(default_admin)
+        await create_user_in_db(default_admin, db=db)
     else:
         logging.info(
             "Admin account already exists"

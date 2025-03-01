@@ -1,17 +1,18 @@
 from datetime import timedelta
 
 # from bson import ObjectId
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from offle_assistant.mongo import users_collection
-from offle_assistant.models import UserModel, Role
+from offle_assistant.models import UserModel
 from offle_assistant.auth import (
     hash_password,
     verify_password,
     create_access_token
 )
 from offle_assistant.database import create_user_in_db, get_user_by_email
+from offle_assistant.dependencies import get_db
 
 auth_router = APIRouter()
 
@@ -22,9 +23,15 @@ class AuthModel(BaseModel):
 
 
 @auth_router.post("/register")
-async def register_user(user: AuthModel):
+async def register_user(
+    user: AuthModel,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
     """Registers a new user with hashed password."""
-    existing_user = await users_collection.find_one({"email": user.email})
+    existing_user = await get_user_by_email(
+        user_email=user.email,
+        db=db
+    )
     if existing_user:  # Checks if a user exists by email
         raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -38,7 +45,10 @@ async def register_user(user: AuthModel):
     )
 
     # Plug the user into the database
-    inserted_id = await create_user_in_db(new_user)
+    inserted_id = await create_user_in_db(
+        new_user=new_user,
+        db=db
+    )
 
     # return a success message with the newly created id
     return {
@@ -48,11 +58,17 @@ async def register_user(user: AuthModel):
 
 
 @auth_router.post("/login")
-async def login_user(user: AuthModel):
+async def login_user(
+    user: AuthModel,
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
     """Authenticates a user and returns a JWT token."""
 
     # Find user by email
-    db_user = await get_user_by_email(user.email)
+    db_user = await get_user_by_email(
+        user_email=user.email,
+        db=db
+    )
 
     # Check if the user query returned a hit and verify password
     if not db_user or not verify_password(
