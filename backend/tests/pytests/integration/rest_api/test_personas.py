@@ -70,7 +70,9 @@ async def test_create_persona_auth_failure():
 @pytest.mark.asyncio(loop_scope="session")
 async def test_get_persona_success():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         builder_token = await get_builder_token(client)
         headers = {"Authorization": f"Bearer {builder_token}"}
 
@@ -94,8 +96,8 @@ async def test_get_persona_success():
             headers=headers
         )
 
-        assert get_response.status_code == 200
         received_persona_dict = get_response.json()
+        assert get_response.status_code == 200
 
         received_persona = PersonaModel(**received_persona_dict)
 
@@ -112,7 +114,9 @@ async def test_get_persona_success():
 @pytest.mark.asyncio(loop_scope="session")
 async def test_get_persona_failure_no_persona():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         builder_token = await get_builder_token(client)
         headers = {"Authorization": f"Bearer {builder_token}"}
 
@@ -131,7 +135,9 @@ async def test_get_persona_failure_no_persona():
 @pytest.mark.asyncio(loop_scope="session")
 async def test_get_user_personas_success():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         builder_token = await get_builder_token(client)
         persona_id_1 = await create_persona(client, builder_token)
         persona_id_2 = await create_persona(client, builder_token)
@@ -151,7 +157,9 @@ async def test_get_user_personas_success():
 @pytest.mark.asyncio(loop_scope="session")
 async def test_update_personas_success():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         builder_token = await get_builder_token(client)
 
         persona_id = await create_persona(client, builder_token)
@@ -178,7 +186,9 @@ async def test_update_personas_success():
 @pytest.mark.asyncio(loop_scope="session")
 async def test_update_personas_failure_not_owned():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         builder_1_token = await get_builder_token(client)
         builder_2_token = await get_builder_token(client)
 
@@ -207,7 +217,9 @@ async def test_update_personas_failure_not_owned():
 @pytest.mark.asyncio(loop_scope="session")
 async def test_persona_chat_success():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         builder_token = await get_builder_token(client)
         persona_id = await create_persona(client, builder_token)
 
@@ -233,7 +245,9 @@ async def test_persona_chat_success():
 @pytest.mark.asyncio(loop_scope="session")
 async def test_persona_message_history_success():
     transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(
+        transport=transport, base_url="http://test"
+    ) as client:
         builder_token = await get_builder_token(client)
         persona_id = await create_persona(client, builder_token)
 

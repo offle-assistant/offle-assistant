@@ -12,9 +12,10 @@ QueryMetric = Literal[
 class RAGConfig(BaseModel):
     """Configuration for Retrieval-Augmented Generation (RAG)."""
 
+    model_config = {"from_attributes": True}
     db_collections: List[str] = Field(
         ...,
-        min_items=1,
+        min_length=1,
         description="List of database collections for retrieval"
     )
     query_threshold: float = Field(
@@ -31,6 +32,3 @@ class RAGConfig(BaseModel):
         default_factory=dict,
         description="Optional extra settings for different vector databases"
     )
-
-    class Config:
-        from_attributes = True

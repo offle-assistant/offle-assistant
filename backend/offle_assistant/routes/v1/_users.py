@@ -12,7 +12,7 @@ async def get_current_user_profile(
 ):
     """Returns the currently authenticated user's profile."""
     return {
-        "user_id": str(user.id),
+        "user_id": user.id,
         "email": user.email,
         "role": user.role,
         "username": user.username,

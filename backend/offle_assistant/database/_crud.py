@@ -26,7 +26,7 @@ async def create_user_in_db(new_user: UserModel) -> ObjectId:
         Adds a new user to the db. Returns the new id.
     """
     result = await users_collection.insert_one(
-        new_user.dict(exclude={"id"})
+        new_user.model_dump(exclude={"id"})
     )
     return result.inserted_id
 
@@ -67,7 +67,7 @@ async def create_message_history_entry_in_db(
         )
 
     result = await message_history_collection.insert_one(
-        new_message_history_entry.dict(exclude={"id"})
+        new_message_history_entry.model_dump(exclude={"id"})
     )
     return result.inserted_id
 
@@ -108,7 +108,7 @@ async def create_persona_in_db(
 ) -> ObjectId:
     """Insert a new persona into the database and return its ID."""
 
-    persona_data = persona.dict()
+    persona_data = persona.model_dump()
     persona_data["creator_id"] = ObjectId(creator_id)  # Ensure ObjectId format
     persona_data["user_id"] = ObjectId(creator_id)  # Keep consistency
 
