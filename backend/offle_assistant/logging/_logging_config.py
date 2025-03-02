@@ -21,7 +21,7 @@ logging_config = {
             "stream": "ext://sys.stdout",
         },
         "rotating_file": {
-            "class": "logging.handlers.TimedRotatingFileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "formatter": "default",
             "filename": pathlib.Path(LOG_DIR, "offle-assistant.log"),
             "maxBytes": 10 * 1024 * 1024,  # 10 MB

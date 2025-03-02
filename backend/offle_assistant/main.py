@@ -4,6 +4,7 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from contextlib import asynccontextmanager
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from offle_assistant.logging import logging_config
 from offle_assistant.llm_client import LLMClient
@@ -19,7 +20,9 @@ from offle_assistant.routes.v1 import (
     auth_router,
     users_router,
     admin_router,
-    personas_router
+    personas_router,
+    groups_router,
+    documents_router
 )
 from offle_assistant.database import (
     create_user_in_db,
@@ -27,10 +30,12 @@ from offle_assistant.database import (
 )
 from offle_assistant.models import (UserModel)
 from offle_assistant.auth import hash_password
+from offle_assistant.dependencies import get_db
 
 
 async def create_default_admin():
-    admin_exists = await get_admin_exists()
+    db = get_db()
+    admin_exists = await get_admin_exists(db=db)
     logging.info("Checking if Admin account exists...")
     if not admin_exists:
         logging.info(
@@ -47,16 +52,28 @@ async def create_default_admin():
             username="admin",
             role="admin"
         )
-        await create_user_in_db(default_admin)
+        await create_user_in_db(default_admin, db=db)
     else:
         logging.info(
             "Admin account already exists"
         )
 
 
+async def create_default_group(db: AsyncIOMotorClient):
+    pass
+
+
+async def create_indexes(db: AsyncIOMotorClient):
+    """Ensure indexes are created on startup."""
+    await db.groups.create_index([("name", 1)], unique=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_default_admin()
+
+    # This is where we ensure that group names are unique
+    await create_indexes(get_db())
 
     yield
 
@@ -93,6 +110,8 @@ app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(personas_router, prefix="/personas", tags=["Personas"])
+app.include_router(groups_router, prefix="/groups", tags=["Groups"])
+app.include_router(documents_router, prefix="/documents", tags=["Documents"])
 
 # Store in `app.state`
 app.state.llm_server: LLMClient = LLMClient(

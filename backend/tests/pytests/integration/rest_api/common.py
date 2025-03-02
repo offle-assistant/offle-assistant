@@ -9,12 +9,12 @@ from offle_assistant.models import PersonaModel
 async def login_user(
     email,
     password,
-    client
+    test_client,
+    test_db,
 ) -> str:
     """ Logs in a user, returns the auth token """
     login_user_payload = {"email": email, "password": password}
-
-    login_response = await client.post(
+    login_response = await test_client.post(
         "/auth/login", json=login_user_payload
     )
 
@@ -24,8 +24,8 @@ async def login_user(
     return user_token
 
 
-async def get_test_user_token(client) -> str:
-    user_info = await create_test_user(client)
+async def get_test_user_token(test_client, test_db) -> str:
+    user_info = await create_test_user(test_db)
 
     email = user_info["email"]
     password = user_info["password"]
@@ -33,13 +33,14 @@ async def get_test_user_token(client) -> str:
     user_token = await login_user(
         email=email,
         password=password,
-        client=client
+        test_client=test_client,
+        test_db=test_db
     )
 
     return user_token
 
 
-async def create_test_user(client) -> str:
+async def create_test_user(test_client) -> str:
     uuid_str = uuid1()
     user_email = f"{uuid_str}@example.com"
     password = "securepassword"
@@ -49,7 +50,7 @@ async def create_test_user(client) -> str:
         "password": password,
     }
 
-    reg_user_response = await client.post(
+    reg_user_response = await test_client.post(
         "/auth/register", json=reg_user_payload)
     data = reg_user_response.json()
     return {
@@ -59,7 +60,7 @@ async def create_test_user(client) -> str:
     }
 
 
-async def get_builder_token(client) -> str:
+async def get_builder_token(test_db) -> str:
     """
 
     I will admit this is janky. But I needed a way to get
@@ -68,17 +69,17 @@ async def get_builder_token(client) -> str:
     """
 
     # Create a default user
-    builder_info = await create_test_user(client)
+    builder_info = await create_test_user(test_db)
     builder_id = builder_info["user_id"]
     builder_email = builder_info["email"]
     builder_password = builder_info["password"]
 
     # promote that user
-    admin_token = await get_default_admin_token(client)
+    admin_token = await get_default_admin_token(test_db)
     headers = {"Authorization": f"Bearer {admin_token}"}
     payload = {"new_role": "builder"}
 
-    await client.put(
+    await test_db.put(
         f"/admin/users/{builder_id}/role",
         json=payload,
         headers=headers
@@ -88,19 +89,19 @@ async def get_builder_token(client) -> str:
     builder_token = await login_user(
         email=builder_email,
         password=builder_password,
-        client=client
+        client=test_db
     )
 
     return builder_token
 
 
-async def get_default_admin_token(client) -> str:
+async def get_default_admin_token(test_db) -> str:
     await create_default_admin()
     default_admin_payload = {
         "email": "admin@admin.com",
         "password": "admin",
     }
-    login_response = await client.post(
+    login_response = await test_db.post(
         "/auth/login", json=default_admin_payload
     )
 
@@ -108,22 +109,23 @@ async def get_default_admin_token(client) -> str:
     return data["access_token"]
 
 
-async def create_persona(client, builder_token) -> str:
+async def create_persona(test_client) -> str:
 
     persona_model: PersonaModel = PersonaModel(
         name="Rick",
         description="Just a man.",
     )
-    persona_model.created_at = jsonable_encoder(persona_model.created_at)
+
     payload = persona_model.model_dump()
 
-    headers = {"Authorization": f"Bearer {builder_token}"}
-    create_response = await client.post(
+    headers = {"Authorization": "Bearer dummy_token"}
+    create_response = await test_client.post(
         "/personas/build",
         json=payload,
         headers=headers
     )
+
     create_data = create_response.json()
     persona_id = create_data["persona_id"]
 
-    return persona_id
+    return str(persona_id)

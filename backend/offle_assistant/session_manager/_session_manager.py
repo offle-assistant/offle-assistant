@@ -2,6 +2,7 @@ import pickle
 
 import redis
 from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from offle_assistant.persona import Persona
 from offle_assistant.models import PersonaModel, MessageHistoryModel
@@ -19,6 +20,7 @@ class SessionManager:
         user_id: ObjectId,
         persona_id: ObjectId,
         message_history_id: ObjectId,
+        db: AsyncIOMotorDatabase
     ) -> Persona:
         """Retrieve persona from Redis or create a new one if needed."""
 
@@ -29,14 +31,18 @@ class SessionManager:
         if (cached_persona := redis_client.get(persona_key)) is not None:
             return pickle.loads(cached_persona)
 
-        persona_dict: dict = await get_persona_by_id(persona_id)
+        persona_dict: dict = await get_persona_by_id(
+            persona_id,
+            db=db
+        )
 
         persona_dict["_id"] = str(persona_dict["_id"])
         persona_dict["user_id"] = str(persona_dict["user_id"])
         persona_dict["creator_id"] = str(persona_dict["creator_id"])
         persona_model: PersonaModel = PersonaModel(**persona_dict)
         message_history_dict = await get_message_history_entry_by_id(
-            message_history_id
+            message_history_id,
+            db=db
         )
 
         message_history_dict["_id"] = str(message_history_dict["_id"])

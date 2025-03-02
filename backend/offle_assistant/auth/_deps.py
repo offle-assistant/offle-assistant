@@ -6,11 +6,15 @@ from bson import ObjectId
 from ._utils import SECRET_KEY, ALGORITHM
 from offle_assistant.database import get_user_by_id
 from offle_assistant.models import UserModel
+from offle_assistant.dependencies import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserModel:
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db=Depends(get_db)
+) -> UserModel:
     """Extracts user from JWT token & verifies authentication."""
     credentials_exception = HTTPException(
         status_code=401,
@@ -27,7 +31,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> UserModel:
     except jwt.JWTError:
         raise credentials_exception
 
-    user_dict = await get_user_by_id(user_id)
+    user_dict = await get_user_by_id(user_id, db=db)
     if not user_dict:
         raise credentials_exception
 
