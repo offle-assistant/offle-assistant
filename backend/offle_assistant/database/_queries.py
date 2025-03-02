@@ -25,12 +25,39 @@ async def get_user_by_id(
     return await db.users.find_one({"_id": ObjectId(user_id)})
 
 
+DEFAULT_GROUP_NAME = "default"
+
+
+async def get_default_group(db: AsyncIOMotorDatabase):
+    """Fetch the default group, or create it if it doesn't exist."""
+    group = await db.groups.find_one({"name": DEFAULT_GROUP_NAME})
+
+    if not group:
+        # Create default group if it doesn't exist
+        group_data = {
+            "name": DEFAULT_GROUP_NAME,
+            "description": "Default group for all users"
+        }
+        insert_result = await db.groups.insert_one(group_data)
+        group = {**group_data, "_id": insert_result.inserted_id}
+
+    return group
+
+
 async def get_group_by_id(
     group_id: str,
     db: AsyncIOMotorDatabase
 ) -> Optional[Dict]:
     """Fetch a user from the database by their _id."""
     return await db.groups.find_one({"_id": ObjectId(group_id)})
+
+
+async def get_group_by_name(
+    group_name: str,
+    db: AsyncIOMotorDatabase
+) -> Optional[Dict]:
+    """Fetch a user from the database by their _id."""
+    return await db.groups.find_one({"name": group_name})
 
 
 async def get_user_by_email(

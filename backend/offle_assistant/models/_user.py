@@ -27,6 +27,7 @@ class UserModel(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     role: Role = Field(default="user")
     email: EmailStr
+    groups: List[PyObjectId] = []
     hashed_password: str
     personas: List[PyObjectId] = []
     persona_message_history: PersonaMessageHistoryMap = Field(
@@ -46,6 +47,26 @@ class UserModel(BaseModel):
             return str(value)  # or raise ValueError if invalid
         return value
 
+    @field_serializer("id")
+    def serialize_id(self, value: Optional[PyObjectId]) -> Optional[str]:
+        # Convert the ObjectId to its string representation if it's not None.
+        return None if value is None else str(value)
+
+    @field_validator("groups", "personas", mode="before")
+    @classmethod
+    def parse_objectid_list(cls, value):
+        """Convert list of strings to list of ObjectIds."""
+        if isinstance(value, list):
+            return [
+                str(v) if ObjectId.is_valid(v) else v for v in value
+            ]
+        return value
+
+    @field_serializer("groups", "personas")
+    def serialize_objectid_list(self, value: List[PyObjectId]) -> List[str]:
+        """Convert list of ObjectIds to list of strings for JSON output."""
+        return [str(v) for v in value]
+
     @field_validator("created_at", mode="before")
     @classmethod
     def parse_timestamp(cls, value):
@@ -56,12 +77,42 @@ class UserModel(BaseModel):
         # If value is already a string in ISO format, let Pydantic handle it
         return value
 
-    @field_serializer("id")
-    def serialize_id(self, value: Optional[PyObjectId]) -> Optional[str]:
-        # Convert the ObjectId to its string representation if it's not None.
-        return None if value is None else str(value)
-
     @field_serializer("created_at")
+    def serialize_timestamp(self, value: datetime | str) -> str:
+        # If the value is a string, convert it to a datetime first.
+        if isinstance(value, str):
+            try:
+                value = datetime.fromisoformat(value)
+            except ValueError:
+                # return the value as-is
+                return value
+
+        return value.isoformat()
+
+
+class UserUpdateModel(BaseModel):
+    model_config = {"from_attributes": True}
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    role: Optional[Role] = Field(default=None)
+    email: Optional[EmailStr] = None
+    groups: Optional[List[PyObjectId]] = None
+    hashed_password: Optional[str] = None
+    personas: Optional[List[PyObjectId]] = None
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+    @field_validator("updated_at", mode="before")
+    @classmethod
+    def parse_timestamp(cls, value):
+        # Check for numeric timestamp
+        if isinstance(value, (int, float)):
+            return datetime.fromtimestamp(value, tz=timezone.utc)
+
+        # If value is already a string in ISO format, let Pydantic handle it
+        return value
+
+    @field_serializer("updated_at")
     def serialize_timestamp(self, value: datetime | str) -> str:
         # If the value is a string, convert it to a datetime first.
         if isinstance(value, str):

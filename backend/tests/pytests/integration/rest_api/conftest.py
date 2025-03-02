@@ -4,7 +4,7 @@ import pytest
 import pytest_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from offle_assistant.main import app
+from offle_assistant.main import app, create_indexes
 from offle_assistant.dependencies import get_db
 from offle_assistant.mongo import MONGO_URI
 from offle_assistant.models import UserModel, PyObjectId
@@ -68,6 +68,7 @@ async def test_db():
         uuidRepresentation="standard",
     )
     mock_db = client["test_database"]
+    await create_indexes(mock_db)
     yield mock_db
 
     client.drop_database(mock_db.name)

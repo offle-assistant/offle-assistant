@@ -4,6 +4,7 @@ from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from contextlib import asynccontextmanager
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from offle_assistant.logging import logging_config
 from offle_assistant.llm_client import LLMClient
@@ -57,9 +58,21 @@ async def create_default_admin():
         )
 
 
+async def create_default_group(db: AsyncIOMotorClient):
+    pass
+
+
+async def create_indexes(db: AsyncIOMotorClient):
+    """Ensure indexes are created on startup."""
+    await db.groups.create_index([("name", 1)], unique=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_default_admin()
+
+    # This is where we ensure that group names are unique
+    await create_indexes(get_db())
 
     yield
 

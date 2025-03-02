@@ -11,7 +11,11 @@ from offle_assistant.auth import (
     verify_password,
     create_access_token
 )
-from offle_assistant.database import create_user_in_db, get_user_by_email
+from offle_assistant.database import (
+    create_user_in_db,
+    get_user_by_email,
+    get_default_group
+)
 from offle_assistant.dependencies import get_db
 
 auth_router = APIRouter()
@@ -35,12 +39,17 @@ async def register_user(
     if existing_user:  # Checks if a user exists by email
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    default_group = await get_default_group(db)
+
+    default_group_id = str(default_group["_id"])
+
     # Create a new user.
     hashed_password = hash_password(user.password)
     new_user = UserModel(
         email=user.email,
         hashed_password=hashed_password,
         username=user.email.split("@")[0],
+        groups=[default_group_id],
         role="user"
     )
 

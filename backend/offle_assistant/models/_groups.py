@@ -31,3 +31,9 @@ class GroupModel(BaseModel):
     def serialize_id(self, value: Optional[PyObjectId]) -> Optional[str]:
         # Convert the ObjectId to its string representation if it's not None.
         return None if value is None else str(value)
+
+
+class GroupUpdateModel(BaseModel):
+    model_config = {"from_attributes": True}
+    name: Optional[str] = Field(None, min_length=3, max_length=50)
+    description: Optional[str] = Field(None, max_length=500)

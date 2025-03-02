@@ -20,6 +20,8 @@ else:
 
 client = AsyncIOMotorClient(MONGO_URI)
 # db = client[MONGO_DB_NAME]
+# db.groups.create_index([("name", 1)], unique=True)
+
 # personas_collection = db["personas"]
 # users_collection = db["users"]
 # message_history_collection = db["message_history"]

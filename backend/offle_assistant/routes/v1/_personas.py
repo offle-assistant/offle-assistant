@@ -133,7 +133,7 @@ async def update_persona(
             status_code=403, detail="You can only modify your own personas"
         )
 
-    update_data = updates.model_dump(exclude_unset=True)
+    update_data = updates.model_dump(exclude_unset=True, exclude_none=True)
 
     update_success = await update_persona_in_db(
         persona_id=persona_id,
