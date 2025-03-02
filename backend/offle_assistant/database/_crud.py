@@ -16,6 +16,7 @@ from pymongo.results import UpdateResult
 # )
 from offle_assistant.models import (
     PersonaModel,
+    GroupModel,
     Role,
     UserModel,
     MessageHistoryModel,
@@ -68,6 +69,40 @@ async def update_user_in_db(
 ) -> UpdateResult:
     updated = await db.users.update_one(
         {"_id": ObjectId(user_id)},
+        {"$set": updates}
+    )
+
+    return updated
+
+
+async def create_group(
+    group: GroupModel,
+    db: AsyncIOMotorDatabase
+) -> ObjectId:
+    """
+        Adds a new group to the database. Returns the new id
+    """
+    result = await db.groups.insert_one(
+        group.model_dump(exclude={"id"})
+    )
+    return result.inserted_id
+
+
+async def delete_group(
+    group_id: str,
+    db: AsyncIOMotorDatabase
+) -> UpdateResult:
+    """Deletes a user by id."""
+    return await db.groups.delete_one({"_id": ObjectId(group_id)})
+
+
+async def update_group(
+    group_id: str,
+    updates: dict,
+    db: AsyncIOMotorDatabase
+) -> UpdateResult:
+    updated = await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
         {"$set": updates}
     )
 
@@ -153,15 +188,21 @@ async def update_persona_in_db(
 
 
 async def upload_file(
-    filepath: str, metadata: FileMetadata, db: AsyncIOMotorDatabase
+    filepath: str,
+    metadata: FileMetadata,
+    db: AsyncIOMotorDatabase
 ):
+    fs_bucket = AsyncIOMotorGridFSBucket(db)
+
     with open(filepath, "rb") as f:
-        file_id = await db.fs_bucket.upload_from_stream(
+        file_id = await fs_bucket.upload_from_stream(
             filename=metadata.filename,
             source=f,
             metadata=metadata.model_dump()
         )
+
     logging.info("File uploaded with id: %s", file_id)
+
     return file_id
 
 
@@ -171,9 +212,17 @@ async def download_file(
     db: AsyncIOMotorDatabase
 ):
     fs_bucket = AsyncIOMotorGridFSBucket(db)
-    with open(output_path, "wb") as f:
-        await fs_bucket.download_to_stream(file_id, f)
-    logging.info("File downloaded to %s", output_path)
+
+    # Open a download stream
+    stream = await fs_bucket.open_download_stream(ObjectId(file_id))
+    file_content = await stream.read()  # Read the full content into memory
+
+    if output_path:  # If an output path is provided, write to file
+        with open(output_path, "wb") as f:
+            f.write(file_content)
+        logging.info("File downloaded to %s", output_path)
+
+    return file_content
 
 
 async def delete_file(
@@ -181,5 +230,23 @@ async def delete_file(
     db: AsyncIOMotorDatabase
 ):
     fs_bucket = AsyncIOMotorGridFSBucket(db)
-    await fs_bucket.delete(file_id)
-    logging.info("File deleted from GridFS")
+
+    # Check if the file exists before attempting deletion
+    file_doc = await db["fs.files"].find_one({"_id": ObjectId(file_id)})
+
+    if not file_doc:
+        logging.warning("File with ID %s not found in GridFS.", file_id)
+        return False  # File was not found
+
+    # Delete the file
+    await fs_bucket.delete(ObjectId(file_id))
+
+    # Confirm the file has been deleted
+    file_check = await db["fs.files"].find_one({"_id": ObjectId(file_id)})
+
+    if file_check:
+        logging.error("File with ID %s was not deleted successfully.", file_id)
+        return False  # File still exists (unexpected)
+
+    logging.info("File with ID %s deleted successfully.", file_id)
+    return True  # File was deleted successfully

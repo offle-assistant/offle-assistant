@@ -5,7 +5,8 @@ from ._queries import (
     get_persona_by_id,
     get_message_history_entry_by_id,
     get_message_history_list_by_user_id,
-    get_admin_exists
+    get_admin_exists,
+    get_group_by_id
 )
 from ._crud import (
     create_persona_in_db,
@@ -16,7 +17,13 @@ from ._crud import (
     create_user_in_db,
     create_message_history_entry_in_db,
     update_message_history_entry_in_db,
-    append_message_to_message_history_entry_in_db
+    append_message_to_message_history_entry_in_db,
+    upload_file,
+    download_file,
+    delete_file,
+    create_group,
+    delete_group,
+    update_group
 )
 
 __all__ = [
@@ -36,4 +43,11 @@ __all__ = [
     "get_admin_exists",
     "append_message_to_message_history_entry_in_db",
     "update_user_in_db",
+    "upload_file",
+    "download_file",
+    "delete_file",
+    "create_group",
+    "get_group",
+    "update_group",
+    "get_group_by_id"
 ]

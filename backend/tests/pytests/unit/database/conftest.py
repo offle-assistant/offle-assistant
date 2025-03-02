@@ -1,26 +1,24 @@
-import pytest
-import asyncio
 import pytest_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
-# from pymongo import MongoClient
-# from app.models import FileMetadata  # Import your Pydantic model
+
+from offle_assistant.mongo import MONGO_URI
 
 
-# Test database URI (use a separate test DB)
-TEST_MONGO_URI = "mongodb://localhost:27017"
-TEST_DB_NAME = "test_database"
-
-
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def test_db():
-    """Creates a test MongoDB database and GridFS bucket"""
-    client = AsyncIOMotorClient(TEST_MONGO_URI)
-    db = client[TEST_DB_NAME]
-    fs_bucket = AsyncIOMotorGridFSBucket(db)
+    """Creates a test MongoDB database session."""
+    client = AsyncIOMotorClient(
+        MONGO_URI,
+        uuidRepresentation="standard",
+    )
+    mock_db = client["test_database"]
+    yield mock_db
 
-    yield db, fs_bucket  # Provide database and GridFS instance
+    client.drop_database(mock_db.name)
+    client.close()
 
-    # Cleanup after test session
-    await db.drop_collection("fs.files")
-    await db.drop_collection("fs.chunks")
-    await client.drop_database(TEST_DB_NAME)
+
+@pytest_asyncio.fixture(scope="function")
+async def test_fs_bucket(test_db):
+    """Provides a fresh GridFS bucket for each test."""
+    return AsyncIOMotorGridFSBucket(test_db)

@@ -19,6 +19,10 @@ from ._personas import (
     personas_router
 )
 
+from ._groups import (
+    groups_router
+)
+
 
 __all__ = [
     "AuthModel",
@@ -29,5 +33,6 @@ __all__ = [
     "admin_router",
     "delete_user",
     "update_user_role",
-    "personas_router"
+    "personas_router",
+    "groups_router"
 ]

@@ -1,83 +1,97 @@
-import pytest
-# import asyncio
-import mimetypes
-from bson import ObjectId
-from offle_assistant.models import FileMetadata
 import pathlib
+import hashlib
+
+import pytest
+from bson import ObjectId
+
+from offle_assistant.database import upload_file, download_file, delete_file
+from offle_assistant.models import FileMetadata
 
 
-TEST_DIR = pathlib.Path("./test_data/")
+TEST_DIR = pathlib.Path("./test_data")
 TEST_FILE = pathlib.Path(TEST_DIR, "test_file.txt")
 
+OUTPUT_PATH = pathlib.Path(TEST_DIR, "downloaded.txt")
+
+
+def hash_file(filepath: str) -> str:
+    """Returns the SHA-256 hash of a file"""
+    hasher = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        while chunk := f.read(8192):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def files_are_identical(
+    file_a: pathlib.Path,
+    file_b: pathlib.Path
+) -> bool:
+    return hash_file(file_a) == hash_file(file_b)
+
 
 @pytest.mark.asyncio
-async def upload_test_file(
-    fs_bucket,
-    filename=TEST_FILE,
-    content=b"Hello, GridFS!"
+async def test_upload_and_download_file(
+    test_db,
+    test_fs_bucket,
 ):
-    """Helper function to upload a test file"""
-    mime_type, _ = mimetypes.guess_type(filename)
-    metadata = FileMetadata(
+    """Test uploading and downloading a file in GridFS"""
+    filename = "test.txt"
+
+    file_metadata: FileMetadata = FileMetadata(
         filename=filename,
-        uploaded_by="test_user",
-        content_type=mime_type or "application/octet-stream",
-        description="Test file",
-        tags=["test"]
+        version=1,
+        uploaded_by="Ricardo Mutti",
+        description="A brief history of the Chicago Symphony."
     )
-    file_id = await fs_bucket.upload_from_stream(
-        filename, content, metadata=metadata.dict()
+
+    # Upload file
+    file_id = await upload_file(
+        filepath=TEST_FILE,
+        metadata=file_metadata,
+        db=test_db
     )
-    return file_id
-
-
-@pytest.mark.asyncio
-async def test_upload_file(test_db):
-    """Test uploading a file to GridFS"""
-    db, fs_bucket = test_db
-    file_id = await upload_test_file(fs_bucket)
 
     assert isinstance(file_id, ObjectId)
 
-    file_doc = await db.fs.files.find_one({"_id": file_id})
-    assert file_doc is not None
-    assert file_doc["metadata"]["filename"] == "test_file.txt"
-    assert file_doc["metadata"]["uploaded_by"] == "test_user"
+    # Download file
+    content = await download_file(
+        file_id=file_id,
+        output_path=OUTPUT_PATH,
+        db=test_db
+    )
+
+    assert files_are_identical(TEST_FILE, OUTPUT_PATH)
+    assert content is not None  # This test sucks
 
 
 @pytest.mark.asyncio
-async def test_retrieve_metadata(test_db):
-    """Test retrieving metadata from GridFS"""
-    db, fs_bucket = test_db
-    file_id = await upload_test_file(fs_bucket)
+async def test_upload_and_delete_file(
+    test_db,
+    test_fs_bucket,
+):
+    """Test uploading and downloading a file in GridFS"""
+    filename = "test.txt"
 
-    file_doc = await db.fs.files.find_one({"_id": file_id})
-    assert file_doc is not None
+    file_metadata: FileMetadata = FileMetadata(
+        filename=filename,
+        version=1,
+        uploaded_by="Ricardo Mutti",
+        description="A brief history of the Chicago Symphony."
+    )
 
-    metadata = FileMetadata(**file_doc["metadata"])
-    assert metadata.filename == "test_file.txt"
-    assert metadata.content_type == "text/plain"
+    # Upload file
+    file_id = await upload_file(
+        filepath=TEST_FILE,
+        metadata=file_metadata,
+        db=test_db
+    )
 
+    assert isinstance(file_id, ObjectId)
 
-@pytest.mark.asyncio
-async def test_download_file(test_db):
-    """Test downloading a file from GridFS"""
-    db, fs_bucket = test_db
-    file_id = await upload_test_file(fs_bucket, content=b"Test content")
+    success = await delete_file(
+        file_id=file_id,
+        db=test_db
+    )
 
-    file_stream = await fs_bucket.open_download_stream(file_id)
-    file_data = await file_stream.read()
-
-    assert file_data == b"Test content"
-
-
-@pytest.mark.asyncio
-async def test_delete_file(test_db):
-    """Test deleting a file from GridFS"""
-    db, fs_bucket = test_db
-    file_id = await upload_test_file(fs_bucket)
-
-    await fs_bucket.delete(file_id)
-
-    file_doc = await db.fs.files.find_one({"_id": file_id})
-    assert file_doc is None
+    assert success is True

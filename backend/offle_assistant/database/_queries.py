@@ -4,14 +4,6 @@ from typing import Dict, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 
-# from offle_assistant.mongo import (
-#     personas_collection,
-#     users_collection,
-#     message_history_collection,
-#     fs_bucket,
-#     db
-# )
-
 from offle_assistant.models import (
     FileMetadata
 )
@@ -31,6 +23,14 @@ async def get_user_by_id(
 ) -> Optional[Dict]:
     """Fetch a user from the database by their _id."""
     return await db.users.find_one({"_id": ObjectId(user_id)})
+
+
+async def get_group_by_id(
+    group_id: str,
+    db: AsyncIOMotorDatabase
+) -> Optional[Dict]:
+    """Fetch a user from the database by their _id."""
+    return await db.groups.find_one({"_id": ObjectId(group_id)})
 
 
 async def get_user_by_email(

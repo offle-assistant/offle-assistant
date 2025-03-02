@@ -19,7 +19,8 @@ from offle_assistant.routes.v1 import (
     auth_router,
     users_router,
     admin_router,
-    personas_router
+    personas_router,
+    groups_router
 )
 from offle_assistant.database import (
     create_user_in_db,
@@ -95,6 +96,7 @@ app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app.include_router(users_router, prefix="/users", tags=["Users"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(personas_router, prefix="/personas", tags=["Personas"])
+app.include_router(groups_router, prefix="/groups", tags=["Groups"])
 
 # Store in `app.state`
 app.state.llm_server: LLMClient = LLMClient(

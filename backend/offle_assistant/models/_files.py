@@ -1,11 +1,12 @@
+from datetime import datetime, timezone
+from typing import Optional, List
+
 from pydantic import (
     Field,
     BaseModel,
     field_serializer,
     field_validator
 )
-from typing import Optional
-from datetime import datetime, timezone
 
 from ._common_utils import PyObjectId
 
