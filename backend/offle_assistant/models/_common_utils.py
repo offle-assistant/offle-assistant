@@ -6,18 +6,19 @@ from bson import ObjectId
 class PyObjectId(ObjectId):
     """
     Custom ObjectId type for MongoDB validation in Pydantic v2
+
+    This whole thing is honestly a bit fucked. The thing is, we need to handle
+    ObjectIds here. However, Pydantic doesn't handle type checking when you put
+    a custom type like this in a "List" or "Optional". So in those cases, we
+    need to convert those to strings in the validators of the individual
+    models... i hate it
+
     """
     @classmethod
     def __get_pydantic_core_schema__(
         cls, source_type, handler: GetCoreSchemaHandler
     ) -> CoreSchema:
         return handler(str)
-
-    # @classmethod
-    # def validate(cls, v):
-    #     if not ObjectId.is_valid(v):
-    #         raise ValueError("Invalid ObjectId")
-    #     return ObjectId(v)
 
     @classmethod
     def validate(cls, value):
