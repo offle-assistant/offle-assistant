@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from offle_assistant.models import UserModel
+from offle_assistant.models import UserModel, GroupModel
 from offle_assistant.auth import (
     hash_password,
     verify_password,
@@ -39,7 +39,9 @@ async def register_user(
     if existing_user:  # Checks if a user exists by email
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    default_group = await get_default_group(db)
+    default_group_dict = await get_default_group(db)
+    default_group: GroupModel = GroupModel(**default_group_dict)
+
     default_group_name = default_group.name
 
     # Create a new user.
