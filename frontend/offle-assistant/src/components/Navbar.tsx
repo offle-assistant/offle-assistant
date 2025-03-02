@@ -1,4 +1,3 @@
-// src/components/Navbar.tsx
 import React, { useState, useContext } from "react";
 import {
   AppBar,
@@ -11,29 +10,34 @@ import {
   Box,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext"; // Import Auth Context
 
 const Navbar: React.FC = () => {
   const { isAdmin, logout } = useContext(AuthContext) || { isAdmin: false, logout: () => {} };
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+  const [mobileMenuEl, setMobileMenuEl] = useState<null | HTMLElement>(null);
+  const [adminMenuEl, setAdminMenuEl] = useState<null | HTMLElement>(null);
+
+  const handleMobileMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setMobileMenuEl(event.currentTarget);
   };
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
+  const handleMobileMenuClose = () => {
+    setMobileMenuEl(null);
+  };
+
+  const handleAdminMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAdminMenuEl(event.currentTarget);
+  };
+
+  const handleAdminMenuClose = () => {
+    setAdminMenuEl(null);
   };
 
   return (
-    <AppBar
-      position="fixed"
-      sx={{
-        background: "linear-gradient(to right, #667eea, #764ba2)", // Matches theme
-        padding: "8px 16px",
-      }}
-    >
+    <AppBar position="fixed" sx={{ background: "linear-gradient(to right, #667eea, #764ba2)", padding: "8px 16px" }}>
       <Toolbar>
         {/* Mobile Menu Button */}
         <IconButton
@@ -41,25 +45,35 @@ const Navbar: React.FC = () => {
           color="inherit"
           aria-label="menu"
           sx={{ display: { md: "none" } }}
-          onClick={handleMenuOpen}
+          onClick={handleMobileMenuOpen}
         >
           <MenuIcon />
         </IconButton>
 
         {/* App Title */}
-        <Typography
-          variant="h6"
-          sx={{ flexGrow: 1, fontWeight: "bold", letterSpacing: 1 }}
-        >
+        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: "bold", letterSpacing: 1 }}>
           Offle Assistant
         </Typography>
 
-        {/* Desktop Navigation Buttons */}
-        <Box sx={{ display: { xs: "none", md: "block" } }}>
+        {/* Desktop Navigation */}
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
           {isAdmin && (
-            <Button color="inherit" component={Link} to="/admin">
-              Admin
-            </Button>
+            <>
+              <Button color="inherit" onClick={handleAdminMenuOpen} endIcon={<ArrowDropDownIcon />}>
+                Admin
+              </Button>
+              <Menu anchorEl={adminMenuEl} open={Boolean(adminMenuEl)} onClose={handleAdminMenuClose}>
+                <MenuItem component={Link} to="/admin/users" onClick={handleAdminMenuClose}>
+                  Manage Users
+                </MenuItem>
+                <MenuItem component={Link} to="/admin/settings" onClick={handleAdminMenuClose}>
+                  Settings
+                </MenuItem>
+                <MenuItem component={Link} to="/admin/logs" onClick={handleAdminMenuClose}>
+                  View Logs
+                </MenuItem>
+              </Menu>
+            </>
           )}
           <Button color="inherit" component={Link} to="/personas">
             Personas
@@ -73,26 +87,29 @@ const Navbar: React.FC = () => {
         </Box>
 
         {/* Mobile Menu */}
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-          sx={{ display: { md: "none" } }}
-        >
+        <Menu anchorEl={mobileMenuEl} open={Boolean(mobileMenuEl)} onClose={handleMobileMenuClose} sx={{ display: { md: "none" } }}>
           {isAdmin && (
-            <MenuItem component={Link} to="/admin" onClick={handleMenuClose}>
-              Admin
-            </MenuItem>
+            <>
+              <MenuItem component={Link} to="/admin/users" onClick={handleMobileMenuClose}>
+                Manage Users
+              </MenuItem>
+              <MenuItem component={Link} to="/admin/settings" onClick={handleMobileMenuClose}>
+                Settings
+              </MenuItem>
+              <MenuItem component={Link} to="/admin/logs" onClick={handleMobileMenuClose}>
+                View Logs
+              </MenuItem>
+            </>
           )}
-          <MenuItem component={Link} to="/personas" onClick={handleMenuClose}>
+          <MenuItem component={Link} to="/personas" onClick={handleMobileMenuClose}>
             Personas
           </MenuItem>
-          <MenuItem component={Link} to="/chat" onClick={handleMenuClose}>
+          <MenuItem component={Link} to="/chat" onClick={handleMobileMenuClose}>
             Chat
           </MenuItem>
           <MenuItem
             onClick={() => {
-              handleMenuClose();
+              handleMobileMenuClose();
               logout();
             }}
           >

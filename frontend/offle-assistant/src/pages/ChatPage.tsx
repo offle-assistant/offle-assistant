@@ -20,11 +20,15 @@ type Persona = {
 };
 
 type Message = {
-  sender: string;
+  role: string; // "user" or "assistant"
   content: string;
-  message_history_id?: string; // Optional, since it's used for tracking history
+  timestamp?: string; // Optional timestamp field
 };
 
+type MessageHistory = {
+  _id: string;
+  messages: Message[];
+};
 
 const ChatPage: React.FC = () => {
   const [personas, setPersonas] = useState<Persona[]>([]);
@@ -32,90 +36,93 @@ const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [messageContent, setMessageContent] = useState("");
+  const [messageHistoryId, setMessageHistoryId] = useState<string | null>(null);
+
 
   // Fetch all personas
   const fetchPersonas = async () => {
     try {
       const res = await api.get("/personas/owned");
-      console.log("API Response:", res.data); // Debugging
-  
-      // Ensure the response contains persona_dict
+      console.log("API Response:", res.data);
+
       if (!res.data || !res.data.persona_dict || typeof res.data.persona_dict !== "object") {
         throw new Error("Invalid API response format: Missing persona_dict");
       }
-  
-      // Extract the persona_dict object
+
       const personaDict = res.data.persona_dict;
-  
-      // Transform personas into a valid array
+
       const transformedPersonas = Object.entries(personaDict).map(([id, name]) => ({
         id,
-        name: typeof name === "string" ? name : "Unnamed Persona", // Handle unexpected formats
+        name: typeof name === "string" ? name : "Unnamed Persona",
       }));
-  
-      console.log("Transformed Personas:", transformedPersonas); // Debugging output
-  
+
+      console.log("Transformed Personas:", transformedPersonas);
+
       setPersonas(transformedPersonas);
       setLoading(false);
     } catch (err) {
       console.error("Failed to fetch personas:", err);
     }
   };
-  
 
   // Fetch message history for the selected persona
   const fetchMessageHistory = async (personaId: string) => {
     try {
-        const res = await api.get<{ message_history: Message[] }>(`/personas/message-history/${personaId}`);
-
-        if (!res.data || !Array.isArray(res.data.message_history)) {
-            throw new Error("Invalid message history response");
-        }
-
-        // Map messages to ensure a consistent format
-        const formattedMessages: Message[] = res.data.message_history.map((msg) => ({
-            sender: msg.sender ?? "AI",
-            content: msg.content ?? "No content",
-            message_history_id: msg.message_history_id, // Track message history
-        }));
-
-        console.log("Fetched Message History:", formattedMessages);
-
-        setMessages(formattedMessages);
+      const res = await api.get<{ message_history: MessageHistory[] }>(`/personas/message-history/${personaId}`);
+      console.log("Full Message History Object:", res.data.message_history);
+  
+      if (!res.data || !Array.isArray(res.data.message_history)) {
+        throw new Error("Invalid message history response");
+      }
+  
+      // If a history exists, set the messageHistoryId from the first entry
+      if (res.data.message_history.length > 0) {
+        setMessageHistoryId(res.data.message_history[0]._id);
+      }
+  
+      const formattedMessages: Message[] = res.data.message_history.flatMap((history) =>
+        history.messages.map((msg) => ({
+          role: msg.role,
+          content: msg.content || "No content available",
+          timestamp: msg.timestamp || new Date().toISOString(),
+        }))
+      );
+  
+      setMessages(formattedMessages);
     } catch (err) {
-        console.error("Failed to fetch message history:", err);
+      console.error("Failed to fetch message history:", err);
     }
-};
+  };
+  
 
-
-
-  // Handle sending a message
   const sendMessage = async () => {
     if (!selectedPersona || !messageContent.trim()) return;
-
+  
     try {
-        // Ensure a message history ID is present
-        const messageHistoryId = messages.length > 0 ? messages[0].message_history_id : null;
-
-        const res = await api.post(`/personas/chat/${selectedPersona.id}`, {
-            message_history_id: messageHistoryId, // Ensure continuity in chat history
-            content: messageContent,
-        });
-
-        // Append user message and AI response to chat
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { sender: "You", content: messageContent },
-            { sender: "AI", content: res.data.response, message_history_id: res.data.message_history_id },
-        ]);
-
-        setMessageContent(""); // Clear input field
+      const res = await api.post(`/personas/chat/${selectedPersona.id}`, {
+        message_history_id: messageHistoryId, // Now using the correct state
+        content: messageContent,
+      });
+  
+      console.log("Chat API Response:", res.data);
+  
+      // Set messageHistoryId if it's a new conversation
+      if (!messageHistoryId) {
+        setMessageHistoryId(res.data.message_history_id);
+      }
+  
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { role: "user", content: messageContent, timestamp: new Date().toISOString() },
+        { role: "assistant", content: res.data.response, timestamp: new Date().toISOString() },
+      ]);
+  
+      setMessageContent("");
     } catch (err) {
-        console.error("Failed to send message:", err);
+      console.error("Failed to send message:", err);
     }
-};
-
-
+  };
+  
 
   useEffect(() => {
     fetchPersonas();
@@ -125,13 +132,13 @@ const ChatPage: React.FC = () => {
     <Box
       sx={{
         display: "flex",
-        height: "85vh", // Full viewport height
-      width: "90vw", // Full viewport width
-      backgroundColor: "#121212", // Dark mode
-      color: "white",
-      overflow: "hidden", // Prevent scrollbar
-      padding: "16px", // Add padding to prevent elements touching screen edges
-      boxSizing: "border-box",
+        height: "85vh",
+        width: "90vw",
+        backgroundColor: "#121212",
+        color: "white",
+        overflow: "hidden",
+        padding: "16px",
+        boxSizing: "border-box",
       }}
     >
       {/* Left Sidebar: Persona List */}
@@ -217,52 +224,44 @@ const ChatPage: React.FC = () => {
             <Box sx={{ flexGrow: 1, overflowY: "auto", p: 2, borderRadius: "8px", bgcolor: "#222" }}>
               {messages.length > 0 ? (
                 messages.map((msg, index) => (
-                  <Typography key={index} sx={{ mb: 1, color: msg.sender === "You" ? "#4CAF50" : "white" }}>
-                    <strong>{msg.sender}:</strong> {msg.content}
+                  <Typography key={index} sx={{ mb: 1, color: msg.role === "user" ? "#4CAF50" : "white" }}>
+                    <strong>{msg.role === "user" ? "You" : "AI"}:</strong> {msg.content}
+                    <small style={{ color: "gray", marginLeft: "10px" }}>{msg.timestamp}</small>
                   </Typography>
                 ))
               ) : (
                 <Typography sx={{ color: "gray", textAlign: "center", mt: 5 }}>
-                  Start a conversation with {selectedPersona.name}!
+                  Start a conversation with {selectedPersona?.name}!
                 </Typography>
               )}
             </Box>
 
-                        {/* Input and Send Button */}
-              <Box sx={{ display: "flex", gap: 1, pb: 2, position: "relative", alignItems: "center" }}>
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Type a message..."
-                    value={messageContent}
-                    onChange={(e) => setMessageContent(e.target.value)}
-                    sx={{
-                        bgcolor: "white",
-                        borderRadius: "8px",
-                        "& .MuiOutlinedInput-root": {
-                            padding: "10px",
-                        },
-                    }}
-                />
-                <Button
-                    variant="contained"
-                    sx={{
-                        bgcolor: "#4CAF50",
-                        color: "white",
-                        height: "100%",
-                        px: 3, // Padding inside the button
-                        whiteSpace: "nowrap", // Prevents button text from wrapping
-                    }}
-                    onClick={sendMessage}
-                >
-                    Send
-                </Button>
+            {/* Input and Send Button */}
+            <Box sx={{ display: "flex", gap: 1, pb: 2, alignItems: "center" }}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                sx={{
+                  bgcolor: "rgba(255, 255, 255, 0.1)", // Slight transparency to contrast against background
+                  borderRadius: "8px",
+                  input: { color: "white" }, // Set text color to white
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.5)" }, // Light border
+                    "&:hover fieldset": { borderColor: "white" }, // White border on hover
+                    "&.Mui-focused fieldset": { borderColor: "#4CAF50" }, // Green border on focus
+                  },
+                }}
+              />
+              <Button variant="contained" sx={{ bgcolor: "#4CAF50", color: "white" }} onClick={sendMessage}>
+                Send
+              </Button>
             </Box>
+
           </>
         ) : (
-          <Typography variant="h5" sx={{ textAlign: "center", mt: 10, color: "gray" }}>
-            Select a persona to start chatting
-          </Typography>
+          <Typography>Select a persona to start chatting</Typography>
         )}
       </Paper>
     </Box>

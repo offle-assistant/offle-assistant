@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from contextlib import asynccontextmanager
 
-from offle_assistant.logging import logging_config
+from offle_assistant.custom_logging import logging_config
 from offle_assistant.llm_client import LLMClient
 from offle_assistant.vector_db import (
     VectorDB,

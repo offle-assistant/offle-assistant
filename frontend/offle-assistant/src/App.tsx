@@ -8,6 +8,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./context/AuthContext";
 import ChatPage from "./pages/ChatPage";
+import AdminUsers from "./pages/AdminUsers";
 
 const App: React.FC = () => {
   return (
@@ -18,6 +19,7 @@ const App: React.FC = () => {
           <Route path="/register" element={<Register />} />
           <Route element={<PrivateRoute />}>
             <Route element={<Layout />}>
+              <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="personas" element={<Personas />} />
               <Route path="chat" element={<ChatPage />} />
 

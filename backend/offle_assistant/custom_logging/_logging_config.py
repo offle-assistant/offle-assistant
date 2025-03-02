@@ -24,7 +24,7 @@ logging_config = {
             "class": "logging.handlers.TimedRotatingFileHandler",
             "formatter": "default",
             "filename": pathlib.Path(LOG_DIR, "offle-assistant.log"),
-            "maxBytes": 10 * 1024 * 1024,  # 10 MB
+            # "maxBytes": 30 * 1024 * 1024,  # 10 MB
             "backupCount": 5,
         },
     },
