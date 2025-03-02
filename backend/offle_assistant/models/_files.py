@@ -13,14 +13,18 @@ from ._common_utils import PyObjectId
 
 class FileMetadata(BaseModel):
     filename: str
-    version: int
     uploaded_by: PyObjectId
     content_type: Optional[str] = Field(default="application/octet-stream")
-    description: Optional[str] = None
+    description: str = Field(
+        default="Default Description",
+        min_length=3,
+        max_length=50
+    )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
     tags: list[str] = []
+    groups: List[str] = []
 
     @field_validator("created_at", mode="before")
     @classmethod

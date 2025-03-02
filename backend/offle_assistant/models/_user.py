@@ -27,7 +27,7 @@ class UserModel(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     role: Role = Field(default="user")
     email: EmailStr
-    groups: List[PyObjectId] = []
+    groups: List[str] = []
     hashed_password: str
     personas: List[PyObjectId] = []
     persona_message_history: PersonaMessageHistoryMap = Field(
@@ -52,7 +52,7 @@ class UserModel(BaseModel):
         # Convert the ObjectId to its string representation if it's not None.
         return None if value is None else str(value)
 
-    @field_validator("groups", "personas", mode="before")
+    @field_validator("personas", mode="before")
     @classmethod
     def parse_objectid_list(cls, value):
         """Convert list of strings to list of ObjectIds."""
@@ -62,7 +62,7 @@ class UserModel(BaseModel):
             ]
         return value
 
-    @field_serializer("groups", "personas")
+    @field_serializer("personas")
     def serialize_objectid_list(self, value: List[PyObjectId]) -> List[str]:
         """Convert list of ObjectIds to list of strings for JSON output."""
         return [str(v) for v in value]

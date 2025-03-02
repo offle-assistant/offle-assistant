@@ -1,6 +1,4 @@
-from typing import Optional
 import logging
-
 
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException

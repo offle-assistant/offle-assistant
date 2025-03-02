@@ -1,6 +1,8 @@
 from typing import Optional
 import logging
 
+from fastapi.responses import StreamingResponse
+from fastapi import UploadFile
 from bson import ObjectId
 from motor.motor_asyncio import (
     AsyncIOMotorGridFSBucket,
@@ -188,22 +190,21 @@ async def update_persona_in_db(
 
 
 async def upload_file(
-    filepath: str,
+    file: UploadFile,
     metadata: FileMetadata,
     db: AsyncIOMotorDatabase
 ):
     fs_bucket = AsyncIOMotorGridFSBucket(db)
 
-    with open(filepath, "rb") as f:
-        file_id = await fs_bucket.upload_from_stream(
-            filename=metadata.filename,
-            source=f,
-            metadata=metadata.model_dump()
-        )
+    file_id = await fs_bucket.upload_from_stream(
+        filename=file.filename,
+        source=file.file,
+        metadata=metadata
+    )
 
-    logging.info("File uploaded with id: %s", file_id)
+    logging.info("File uploaded with id: %s", str(file_id))
 
-    return file_id
+    return str(file_id)
 
 
 async def download_file(
@@ -211,18 +212,15 @@ async def download_file(
     output_path: str,
     db: AsyncIOMotorDatabase
 ):
+    """API Endpoint to download a file from GridFS"""
     fs_bucket = AsyncIOMotorGridFSBucket(db)
-
-    # Open a download stream
     stream = await fs_bucket.open_download_stream(ObjectId(file_id))
-    file_content = await stream.read()  # Read the full content into memory
 
-    if output_path:  # If an output path is provided, write to file
-        with open(output_path, "wb") as f:
-            f.write(file_content)
-        logging.info("File downloaded to %s", output_path)
-
-    return file_content
+    return StreamingResponse(
+        stream, media_type="application/octet-stream", headers={
+            "Content-Disposition": f'attachment; filename="{file_id}"'
+        }
+    )
 
 
 async def delete_file(

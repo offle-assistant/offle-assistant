@@ -40,8 +40,7 @@ async def register_user(
         raise HTTPException(status_code=400, detail="Email already registered")
 
     default_group = await get_default_group(db)
-
-    default_group_id = str(default_group["_id"])
+    default_group_name = default_group.name
 
     # Create a new user.
     hashed_password = hash_password(user.password)
@@ -49,7 +48,7 @@ async def register_user(
         email=user.email,
         hashed_password=hashed_password,
         username=user.email.split("@")[0],
-        groups=[default_group_id],
+        groups=[default_group_name],
         role="user"
     )
 

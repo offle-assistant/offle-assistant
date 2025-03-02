@@ -21,6 +21,7 @@ def override_get_current_user_normal_user():
             username="test",
             email="test@example.com",
             hashed_password="hashedpassword",
+            groups=["default"]
         )
 
     return mock_get_current_user
@@ -54,7 +55,8 @@ def override_get_current_user_admin():
             username="test",
             email="test@example.com",
             hashed_password="hashedpassword",
-            role="admin"
+            role="admin",
+            groups=["default", "admin"]
         )
 
     return mock_get_current_user
