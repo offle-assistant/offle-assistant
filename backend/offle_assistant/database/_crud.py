@@ -35,7 +35,7 @@ async def create_user_in_db(
     """
         Adds a new user to the db. Returns the new id.
     """
-    result = await db.users_collection.insert_one(
+    result = await db.users.insert_one(
         new_user.model_dump(exclude={"id"})
     )
     return result.inserted_id
@@ -46,7 +46,7 @@ async def delete_user_in_db(
     db: AsyncIOMotorDatabase
 ) -> UpdateResult:
     """Deletes a user by id."""
-    return await db.users_collection.delete_one({"_id": ObjectId(user_id)})
+    return await db.users.delete_one({"_id": ObjectId(user_id)})
 
 
 async def update_user_role_in_db(
@@ -55,7 +55,7 @@ async def update_user_role_in_db(
     db: AsyncIOMotorDatabase
 ) -> UpdateResult:
     """Updates a user's role."""
-    return await db.users_collection.update_one(
+    return await db.users.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": {"role": new_role}}
     )
@@ -66,7 +66,7 @@ async def update_user_in_db(
     updates: dict,
     db: AsyncIOMotorDatabase
 ) -> UpdateResult:
-    updated = await db.users_collection.update_one(
+    updated = await db.users.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": updates}
     )
@@ -84,7 +84,7 @@ async def create_message_history_entry_in_db(
             description="Default Description",
         )
 
-    result = await db.message_history_collection.insert_one(
+    result = await db.message_histories.insert_one(
         new_message_history_entry.model_dump(exclude={"id"})
     )
     return result.inserted_id
@@ -95,7 +95,7 @@ async def update_message_history_entry_in_db(
     updates: dict,
     db: AsyncIOMotorDatabase
 ) -> UpdateResult:
-    update_success = await db.message_history_collection.update_one(
+    update_success = await db.message_histories.update_one(
         {"_id": ObjectId(message_history_id)},
         {"$set": updates}
     )
@@ -135,7 +135,7 @@ async def create_persona_in_db(
     persona_data["creator_id"] = ObjectId(creator_id)  # Ensure ObjectId format
     persona_data["user_id"] = ObjectId(creator_id)  # Keep consistency
 
-    result = await db.personas_collection.insert_one(persona_data)
+    result = await db.personas.insert_one(persona_data)
     return result.inserted_id
 
 
@@ -144,7 +144,7 @@ async def update_persona_in_db(
     updates: dict,
     db: AsyncIOMotorDatabase
 ) -> UpdateResult:
-    updated = await db.personas_collection.update_one(
+    updated = await db.personas.update_one(
         {"_id": ObjectId(persona_id)},
         {"$set": updates}
     )

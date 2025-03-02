@@ -18,7 +18,7 @@ from offle_assistant.models import (
 
 
 async def get_admin_exists(db: AsyncIOMotorDatabase) -> bool:
-    admin_user = await db["users"].find_one({"role": "admin"})
+    admin_user = await db.users.find_one({"role": "admin"})
     if admin_user:
         return True
     else:
@@ -30,7 +30,7 @@ async def get_user_by_id(
     db: AsyncIOMotorDatabase
 ) -> Optional[Dict]:
     """Fetch a user from the database by their _id."""
-    return await db["users"].find_one({"_id": ObjectId(user_id)})
+    return await db.users.find_one({"_id": ObjectId(user_id)})
 
 
 async def get_user_by_email(
@@ -38,7 +38,7 @@ async def get_user_by_email(
     db: AsyncIOMotorDatabase
 ) -> Optional[Dict]:
     """Fetch a user from the database by their _id."""
-    return await db["users"].find_one({"email": user_email})
+    return await db.users.find_one({"email": user_email})
 
 
 async def get_persona_by_id(
@@ -46,7 +46,7 @@ async def get_persona_by_id(
     db: AsyncIOMotorDatabase
 ) -> Optional[Dict]:
     """Fetch a persona from the database by their _id."""
-    return await db["personas"].find_one({"_id": ObjectId(persona_id)})
+    return await db.personas.find_one({"_id": ObjectId(persona_id)})
 
 
 async def get_message_history_entry_by_id(
@@ -54,7 +54,7 @@ async def get_message_history_entry_by_id(
     db: AsyncIOMotorDatabase
 ) -> Optional[Dict]:
     """Get a message history object"""
-    return await db["message_history"].find_one(
+    return await db.message_histories.find_one(
         {"_id": ObjectId(message_history_id)}
     )
 
@@ -67,11 +67,10 @@ async def get_message_history_list_by_user_id(
     query = {"_id": ObjectId(user_id)}
     projection = {f"persona_message_history.{persona_id}": 1}
 
-    retrieved_user: list = await db["users"].find_one(
+    retrieved_user: list = await db.users.find_one(
         query,
         projection
     )
-
     if not retrieved_user:
         # Couldn't find a user by that id.
         return None
@@ -93,8 +92,14 @@ async def get_personas_by_creator_id(
         and return as {persona_id: persona_name}.
     """
 
+    try:
+        user_id = ObjectId(user_id)
+    except Exception as e:
+        logging.error("%s", e)
+        raise ValueError(f"Invalid user_id format: {user_id}")
+
     # Find all personas where the creator_id matches the user's _id
-    personas = await db["personas"].find(
+    personas = await db.personas.find(
         {"creator_id": ObjectId(user_id)}
     ).to_list(None)
 

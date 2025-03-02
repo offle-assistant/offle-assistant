@@ -109,22 +109,23 @@ async def get_default_admin_token(test_db) -> str:
     return data["access_token"]
 
 
-async def create_persona(test_db, builder_token) -> str:
+async def create_persona(test_client) -> str:
 
     persona_model: PersonaModel = PersonaModel(
         name="Rick",
         description="Just a man.",
     )
-    persona_model.created_at = jsonable_encoder(persona_model.created_at)
+
     payload = persona_model.model_dump()
 
-    headers = {"Authorization": f"Bearer {builder_token}"}
-    create_response = await test_db.post(
+    headers = {"Authorization": "Bearer dummy_token"}
+    create_response = await test_client.post(
         "/personas/build",
         json=payload,
         headers=headers
     )
+
     create_data = create_response.json()
     persona_id = create_data["persona_id"]
 
-    return persona_id
+    return str(persona_id)

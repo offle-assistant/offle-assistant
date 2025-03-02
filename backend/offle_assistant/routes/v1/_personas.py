@@ -1,6 +1,7 @@
 from typing import Optional
+import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ValidationError
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -45,7 +46,6 @@ async def get_user_personas(
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """Returns a dictionary of all personas created by the logged-in user."""
-
     # This is a dict {"persona_id": "persona_name"}
     user_personas = await get_personas_by_creator_id(
         user_id=user_model.id,
@@ -190,7 +190,7 @@ async def chat_with_persona(
     # Check if there is a provided message_history_id
     if message_history_id is None:
         # If not, create a new entry in the message_history_collection
-        message_history_id = await create_message_history_entry_in_db()
+        message_history_id = await create_message_history_entry_in_db(db=db)
 
         # And then, ensure that there is a key for this persona_id on the user
         user_model.persona_message_history.root.setdefault(str(persona_id), [])
@@ -200,16 +200,20 @@ async def chat_with_persona(
             str(message_history_id)
         )
 
-        await update_user_in_db(
+        success = await update_user_in_db(
             user_id=user_id,
             updates=user_model.model_dump(),
             db=db
         )
 
+        if not success:
+            logging.error("Couldn't update user database!!")
+
     persona: Persona = await SessionManager.get_persona_instance(
         user_id=user_id,
         persona_id=persona_id,
         message_history_id=message_history_id,
+        db=db
     )
 
     if not persona:

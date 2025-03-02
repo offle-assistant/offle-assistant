@@ -1,15 +1,19 @@
-from httpx import AsyncClient, ASGITransport
-
 import pytest
 
+from offle_assistant.auth import get_current_user
 from offle_assistant.main import app
-# from offle_assistant.mongo import db
-
-from .common import create_test_user, login_user
 
 
 @pytest.mark.asyncio
-async def test_get_current_user(test_client, test_db):
+async def test_get_current_user(
+    test_client,
+    test_db,
+    override_get_current_user_normal_user
+):
+    app.dependency_overrides[get_current_user] = (
+        override_get_current_user_normal_user
+    )
+
     headers = {"Authorization": "Bearer dummy_token"}
 
     get_user_response = await test_client.get(

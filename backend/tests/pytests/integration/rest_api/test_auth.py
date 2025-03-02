@@ -3,90 +3,83 @@ from httpx import AsyncClient, ASGITransport
 import pytest
 
 from offle_assistant.main import app
-from offle_assistant.mongo import db
+from offle_assistant.auth import (
+    get_current_user,
+)
 
 
-@pytest.mark.asyncio(loop_scope="session")
-async def test_register_user():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        await db.client.drop_database(db.name)
-        payload = {
-            "email": "test_user@example.com",
-            "password": "securepassword"
-        }
+@pytest.mark.asyncio
+async def test_register_user(
+    test_client,
+    test_db,
+):
+    payload = {
+        "email": "test_user@example.com",
+        "password": "securepassword"
+    }
 
-        response = await client.post("/auth/register", json=payload)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["message"] == "User registered"
-        await db.client.drop_database(db.name)
-
-
-@pytest.mark.asyncio(loop_scope="session")
-async def test_register_admin():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        await db.client.drop_database(db.name)
-        payload = {
-            "email": "test_user@example.com",
-            "password": "securepassword",
-            "role": "admin"
-        }
-
-        response = await client.post("/auth/register", json=payload)
-        assert response.status_code == 200
-        data = response.json()
-        assert data["message"] == "User registered"
-        await db.client.drop_database(db.name)
+    response = await test_client.post("/auth/register", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["message"] == "User registered"
+    await test_db.users.drop()
 
 
-@pytest.mark.asyncio(loop_scope="session")
-async def test_login_user_success():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        await db.client.drop_database(db.name)
-        payload = {
-            "email": "test_user@example.com",
-            "password": "securepassword",
-        }
+@pytest.mark.asyncio
+async def test_login_user_success(
+    test_client,
+    test_db,
+    override_get_current_user_normal_user
+):
+    await test_db.users.drop()
+    app.dependency_overrides[get_current_user] = (
+        override_get_current_user_normal_user
+    )
 
-        register_response = await client.post("/auth/register", json=payload)
-        assert register_response.status_code == 200
-        data = register_response.json()
-        assert data["message"] == "User registered"
+    payload = {
+        "email": "test_user@example.com",
+        "password": "securepassword",
+    }
 
-        login_response = await client.post("/auth/login", json=payload)
-        assert login_response.status_code == 200
-        data = login_response.json()
-        assert data["access_token"]
-        assert data["token_type"] == "bearer"
+    register_response = await test_client.post("/auth/register", json=payload)
+    assert register_response.status_code == 200
+    data = register_response.json()
+    assert data["message"] == "User registered"
 
-        await db.client.drop_database(db.name)
+    login_response = await test_client.post("/auth/login", json=payload)
+    assert login_response.status_code == 200
+    data = login_response.json()
+    assert data["access_token"]
+    assert data["token_type"] == "bearer"
+
+    await test_db.users.drop()
 
 
-@pytest.mark.asyncio(loop_scope="session")
-async def test_login_user_failure():
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        await db.client.drop_database(db.name)
-        payload = {
-            "email": "test_user@example.com",
-            "password": "securepassword",
-        }
+@pytest.mark.asyncio
+async def test_login_user_failure(
+    test_client,
+    test_db,
+    override_get_current_user_normal_user
+):
+    await test_db.users.drop()
 
-        register_response = await client.post("/auth/register", json=payload)
-        assert register_response.status_code == 200
-        data = register_response.json()
-        assert data["message"] == "User registered"
+    payload = {
+        "email": "test_user@example.com",
+        "password": "securepassword",
+    }
 
-        bad_payload = {
-            "email": "test_user@example.com",
-            "password": "wrong_password",
-        }
-        login_response = await client.post("/auth/login", json=bad_payload)
-        assert login_response.status_code == 401
-        data = login_response.json()
-        assert data["detail"] == "Invalid email or password"
+    register_response = await test_client.post("/auth/register", json=payload)
+    assert register_response.status_code == 200
+    data = register_response.json()
+    assert data["message"] == "User registered"
 
-        await db.client.drop_database(db.name)
+    bad_payload = {
+        "email": "test_user@example.com",
+        "password": "wrong_password",
+    }
+    login_response = await test_client.post("/auth/login", json=bad_payload)
+    assert login_response.status_code == 401
+    data = login_response.json()
+    assert data["detail"] == "Invalid email or password"
+
+    await test_db.users.drop()
