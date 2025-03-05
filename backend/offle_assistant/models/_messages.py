@@ -19,6 +19,28 @@ class MessageContent(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc)
     )
 
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def parse_timestamp(cls, value):
+        # Check for numeric timestamp
+        if isinstance(value, (int, float)):
+            return datetime.fromtimestamp(value, tz=timezone.utc)
+
+        # If value is already a string in ISO format, let Pydantic handle it
+        return value
+
+    @field_serializer("timestamp")
+    def serialize_timestamp(self, value: datetime | str) -> str:
+        # If the value is a string, convert it to a datetime first.
+        if isinstance(value, str):
+            try:
+                value = datetime.fromisoformat(value)
+            except ValueError:
+                # return the value as-is
+                return value
+
+        return value.isoformat()
+
 
 class MessageHistoryModel(BaseModel):
     model_config = {"from_attributes": True}
