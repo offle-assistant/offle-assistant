@@ -151,7 +151,7 @@ async def append_message_to_message_history_entry_in_db(
         )
     )
 
-    message_history_entry["messages"].append(message)
+    message_history_entry["messages"].append(message.model_dump())
     success = await update_message_history_entry_in_db(
         message_history_id=message_history_id,
         updates=message_history_entry,

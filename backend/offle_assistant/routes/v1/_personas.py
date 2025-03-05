@@ -225,6 +225,20 @@ async def chat_with_persona(
             status_code=400, detail="Message content is required"
         )
 
+    success = await append_message_to_message_history_entry_in_db(
+        message_history_id=message_history_id,
+        message=MessageContent(
+            role="user",
+            content=user_message,
+        ),
+        db=db
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=500, detail="Could not update message history"
+        )
+
     chat_response: PersonaChatResponse = persona.chat(
         user_response=user_message,
         stream=False,
@@ -233,12 +247,15 @@ async def chat_with_persona(
         vector_db=vector_db
     )
 
-    most_recent_message: MessageContent = persona.message_chain[-1]
+    most_recent_message: MessageContent = MessageContent(
+        **persona.message_chain[-1]
+    )
     success = await append_message_to_message_history_entry_in_db(
         message_history_id=message_history_id,
         message=most_recent_message,
         db=db
     )
+
     if not success:
         raise HTTPException(
             status_code=500, detail="Could not update message history"
