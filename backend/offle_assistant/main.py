@@ -6,7 +6,7 @@ import uvicorn
 from contextlib import asynccontextmanager
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from offle_assistant.logging import logging_config
+from offle_assistant.custom_logging import logging_config
 from offle_assistant.llm_client import LLMClient
 from offle_assistant.vector_db import (
     VectorDB,
@@ -147,7 +147,7 @@ def start():
         host="0.0.0.0",
         port=8000,
         log_config=logging_config,
-        log_level="info",
+        log_level="debug",
         reload=True
     )
 

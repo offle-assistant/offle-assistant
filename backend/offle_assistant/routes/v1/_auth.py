@@ -91,6 +91,7 @@ async def login_user(
 
     # Authentication was successful so create an access token
     access_token = create_access_token(
-        {"user_id": str(db_user["_id"])}, expires_delta=timedelta(minutes=30)
+        {"user_id": str(db_user["_id"]), "role": db_user["role"]},
+        expires_delta=timedelta(minutes=30)
     )
     return {"access_token": access_token, "token_type": "bearer"}
