@@ -8,7 +8,8 @@ from ._queries import (
     get_admin_exists,
     get_group_by_id,
     get_group_by_name,
-    get_default_group
+    get_default_group,
+    get_message_history_entry_without_message_chain
 )
 from ._crud import (
     create_persona_in_db,
@@ -52,5 +53,6 @@ __all__ = [
     "get_group",
     "update_group",
     "get_group_by_id",
-    "get_group_by_name"
+    "get_group_by_name",
+    "get_message_history_entry_without_message_chain"
 ]

@@ -1,10 +1,17 @@
+from typing import List
 from httpx import AsyncClient, ASGITransport
 
 import pytest
 from fastapi.encoders import jsonable_encoder
 
 from offle_assistant.auth import get_current_user
-from offle_assistant.models import PersonaModel, PersonaUpdateModel, PyObjectId
+from offle_assistant.models import (
+    PersonaModel,
+    PersonaUpdateModel,
+    PyObjectId,
+    MessageContent,
+    MessageHistoryModel
+)
 from offle_assistant.main import app
 
 from .common import (
@@ -329,6 +336,13 @@ async def test_persona_message_history_success(
 
     data = message_hist_response.json()
 
-    assert message_id in data["message_history"]
+    message_history_ids: List = [
+        MessageHistoryModel(
+            **message_history
+        ).id for message_history in data["message_history"]
+    ]
+
+    assert message_id in message_history_ids
+
     test_db.users.drop()
     test_db.message_histories.drop()

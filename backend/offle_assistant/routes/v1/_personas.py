@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,7 +11,8 @@ from offle_assistant.models import (
     PersonaUpdateModel,
     UserModel,
     PyObjectId,
-    MessageContent
+    MessageContent,
+    MessageHistoryModel,
 )
 from offle_assistant.persona import Persona, PersonaChatResponse
 from offle_assistant.database import (
@@ -24,7 +25,8 @@ from offle_assistant.database import (
     get_message_history_list_by_user_id,
     update_message_history_entry_in_db,
     append_message_to_message_history_entry_in_db,
-    update_user_in_db
+    update_user_in_db,
+    get_message_history_entry_without_message_chain
 )
 from offle_assistant.session_manager import SessionManager
 from offle_assistant.llm_client import LLMClient
@@ -153,12 +155,32 @@ async def get_persona_message_history(
     user_model: UserModel = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
+    """
+
+    This gets you a list of all MessageContent objects for a given
+    persona/user combo. The MessageContent objects have a value of
+    None for the message_chain object to make it more lightweight.
+
+    These are in the form of a list in the message_history key.
+
+    """
+
     user_id = str(user_model.id)
-    message_history_list: list = await get_message_history_list_by_user_id(
+    message_history_id_list: List = await get_message_history_list_by_user_id(
         user_id=user_id,
         persona_id=persona_id,
         db=db
     )
+
+    message_history_list: List[MessageHistoryModel] = []
+    for message_history_id in message_history_id_list:
+        message_history: MessageHistoryModel = (
+            await get_message_history_entry_without_message_chain(
+                message_history_id=message_history_id,
+                db=db
+            )
+        )
+        message_history_list.append(message_history)
 
     return {
         "persona_id": persona_id,

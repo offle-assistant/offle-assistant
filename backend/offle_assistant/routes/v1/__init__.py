@@ -23,6 +23,10 @@ from ._groups import (
     groups_router
 )
 
+from ._message_history import (
+    message_history_router
+)
+
 from ._documents import documents_router
 
 
@@ -37,5 +41,6 @@ __all__ = [
     "update_user_role",
     "personas_router",
     "groups_router",
-    "documents_router"
+    "documents_router",
+    "message_history_router",
 ]
