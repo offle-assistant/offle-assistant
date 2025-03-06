@@ -18,6 +18,10 @@ Role = Literal["user", "admin", "builder"]
 
 
 class PersonaMessageHistoryMap(RootModel[Dict[PyObjectId, List[PyObjectId]]]):
+    """
+    This maps a persona_id to a list of message_history_ids that refer
+    to a conversation between the user and that persona.
+    """
     pass
 
 
