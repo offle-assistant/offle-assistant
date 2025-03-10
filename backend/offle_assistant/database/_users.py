@@ -33,6 +33,14 @@ async def create_user_in_db(
 ############################
 
 
+async def get_admin_exists(db: AsyncIOMotorDatabase) -> bool:
+    admin_user = await db.users.find_one({"role": "admin"})
+    if admin_user:
+        return True
+    else:
+        return False
+
+
 async def get_user_by_id(
     user_id: str,
     db: AsyncIOMotorDatabase

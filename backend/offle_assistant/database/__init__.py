@@ -5,6 +5,7 @@ from ._users import (
     update_user_role_in_db,
     update_user_in_db,
     create_user_in_db,
+    get_admin_exists,
 )
 
 from ._personas import (
@@ -24,10 +25,6 @@ from ._groups import (
     update_group,
 )
 
-from ._queries import (
-    get_admin_exists,
-)
-
 from ._message_histories import (
     create_message_history_entry_in_db,
     get_message_history_entry_by_id,
@@ -37,8 +34,10 @@ from ._message_histories import (
     append_message_to_message_history_entry_in_db,
 )
 
-from ._crud import (
+from ._files import (
     upload_file,
+    find_files_by_tag,
+    get_file_metadata,
     download_file,
     delete_file,
 )
@@ -63,6 +62,8 @@ __all__ = [
     "update_message_history_entry_in_db",
     "append_message_to_message_history_entry_in_db",
     "upload_file",
+    "get_file_metadata",
+    "find_files_by_tag",
     "download_file",
     "delete_file",
     "create_group",
