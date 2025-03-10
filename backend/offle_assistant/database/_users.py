@@ -8,7 +8,7 @@ from offle_assistant.models import (
     Role
 )
 
-from pymongo.results import UpdateResult
+from pymongo.results import UpdateResult, DeleteResult
 
 
 ############################
@@ -88,6 +88,6 @@ async def update_user_in_db(
 async def delete_user_in_db(
     user_id: str,
     db: AsyncIOMotorDatabase
-) -> UpdateResult:
+) -> DeleteResult:
     """Deletes a user by id."""
     return await db.users.delete_one({"_id": ObjectId(user_id)})
