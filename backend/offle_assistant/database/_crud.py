@@ -19,8 +19,6 @@ from pymongo.results import UpdateResult
 from offle_assistant.models import (
     PersonaModel,
     GroupModel,
-    Role,
-    UserModel,
     MessageHistoryModel,
     MessageContent,
     FileMetadata
@@ -29,52 +27,6 @@ from offle_assistant.models import (
 from ._queries import (
     get_message_history_entry_by_id
 )
-
-
-async def create_user_in_db(
-    new_user: UserModel,
-    db: AsyncIOMotorDatabase
-) -> ObjectId:
-    """
-        Adds a new user to the db. Returns the new id.
-    """
-    result = await db.users.insert_one(
-        new_user.model_dump(exclude={"id"})
-    )
-    return result.inserted_id
-
-
-async def delete_user_in_db(
-    user_id: str,
-    db: AsyncIOMotorDatabase
-) -> UpdateResult:
-    """Deletes a user by id."""
-    return await db.users.delete_one({"_id": ObjectId(user_id)})
-
-
-async def update_user_role_in_db(
-    user_id: str,
-    new_role: Role,
-    db: AsyncIOMotorDatabase
-) -> UpdateResult:
-    """Updates a user's role."""
-    return await db.users.update_one(
-        {"_id": ObjectId(user_id)},
-        {"$set": {"role": new_role}}
-    )
-
-
-async def update_user_in_db(
-    user_id: str,
-    updates: dict,
-    db: AsyncIOMotorDatabase
-) -> UpdateResult:
-    updated = await db.users.update_one(
-        {"_id": ObjectId(user_id)},
-        {"$set": updates}
-    )
-
-    return updated
 
 
 async def create_group(

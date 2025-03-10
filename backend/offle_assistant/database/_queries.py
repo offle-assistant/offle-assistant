@@ -18,14 +18,6 @@ async def get_admin_exists(db: AsyncIOMotorDatabase) -> bool:
         return False
 
 
-async def get_user_by_id(
-    user_id: str,
-    db: AsyncIOMotorDatabase
-) -> Optional[Dict]:
-    """Fetch a user from the database by their _id."""
-    return await db.users.find_one({"_id": ObjectId(user_id)})
-
-
 DEFAULT_GROUP_NAME = "default"
 
 
@@ -59,14 +51,6 @@ async def get_group_by_name(
 ) -> Optional[Dict]:
     """Fetch a user from the database by their _id."""
     return await db.groups.find_one({"name": group_name})
-
-
-async def get_user_by_email(
-    user_email: str,
-    db: AsyncIOMotorDatabase
-) -> Optional[Dict]:
-    """Fetch a user from the database by their _id."""
-    return await db.users.find_one({"email": user_email})
 
 
 async def get_persona_by_id(
