@@ -1,14 +1,13 @@
 from typing import Dict, Optional
 
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.results import UpdateResult, DeleteResult
 
 from offle_assistant.models import (
     UserModel,
     Role
 )
-
-from pymongo.results import UpdateResult, DeleteResult
 
 
 ############################
