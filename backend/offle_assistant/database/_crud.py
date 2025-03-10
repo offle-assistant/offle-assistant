@@ -10,14 +10,7 @@ from motor.motor_asyncio import (
 )
 from pymongo.results import UpdateResult
 
-# from offle_assistant.mongo import (
-#     personas_collection,
-#     users_collection,
-#     message_history_collection,
-#     fs_bucket
-# )
 from offle_assistant.models import (
-    PersonaModel,
     GroupModel,
     MessageHistoryModel,
     MessageContent,
@@ -111,34 +104,6 @@ async def append_message_to_message_history_entry_in_db(
     )
 
     return success
-
-
-async def create_persona_in_db(
-    persona: PersonaModel,
-    creator_id: str,
-    db: AsyncIOMotorDatabase
-) -> ObjectId:
-    """Insert a new persona into the database and return its ID."""
-
-    persona_data = persona.model_dump()
-    persona_data["creator_id"] = ObjectId(creator_id)  # Ensure ObjectId format
-    persona_data["user_id"] = ObjectId(creator_id)  # Keep consistency
-
-    result = await db.personas.insert_one(persona_data)
-    return result.inserted_id
-
-
-async def update_persona_in_db(
-    persona_id: str,
-    updates: dict,
-    db: AsyncIOMotorDatabase
-) -> UpdateResult:
-    updated = await db.personas.update_one(
-        {"_id": ObjectId(persona_id)},
-        {"$set": updates}
-    )
-
-    return updated
 
 
 async def upload_file(

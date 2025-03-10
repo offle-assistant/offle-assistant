@@ -6,9 +6,14 @@ from ._users import (
     update_user_in_db,
     create_user_in_db,
 )
-from ._queries import (
+from ._personas import (
+    create_persona_in_db,
+    update_persona_in_db,
     get_personas_by_creator_id,
     get_persona_by_id,
+    delete_persona_by_id
+)
+from ._queries import (
     get_message_history_entry_by_id,
     get_message_history_list_by_user_id,
     get_admin_exists,
@@ -18,8 +23,6 @@ from ._queries import (
     get_message_history_entry_without_message_chain
 )
 from ._crud import (
-    create_persona_in_db,
-    update_persona_in_db,
     create_message_history_entry_in_db,
     update_message_history_entry_in_db,
     append_message_to_message_history_entry_in_db,
@@ -58,5 +61,6 @@ __all__ = [
     "get_group_by_name",
     "get_message_history_entry_without_message_chain",
     "get_default_group",
-    "delete_group"
+    "delete_group",
+    "delete_persona_by_id"
 ]
