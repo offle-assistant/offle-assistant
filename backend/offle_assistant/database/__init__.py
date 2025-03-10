@@ -25,16 +25,19 @@ from ._groups import (
 )
 
 from ._queries import (
+    get_admin_exists,
+)
+
+from ._message_histories import (
+    create_message_history_entry_in_db,
     get_message_history_entry_by_id,
     get_message_history_list_by_user_id,
-    get_admin_exists,
-    get_message_history_entry_without_message_chain
+    get_message_history_entry_without_message_chain,
+    update_message_history_entry_in_db,
+    append_message_to_message_history_entry_in_db,
 )
 
 from ._crud import (
-    create_message_history_entry_in_db,
-    update_message_history_entry_in_db,
-    append_message_to_message_history_entry_in_db,
     upload_file,
     download_file,
     delete_file,

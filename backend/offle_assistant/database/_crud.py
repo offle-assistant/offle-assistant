@@ -1,4 +1,3 @@
-from typing import Optional
 import logging
 
 from fastapi.responses import StreamingResponse
@@ -8,102 +7,10 @@ from motor.motor_asyncio import (
     AsyncIOMotorGridFSBucket,
     AsyncIOMotorDatabase
 )
-from pymongo.results import UpdateResult
 
 from offle_assistant.models import (
-    GroupModel,
-    MessageHistoryModel,
-    MessageContent,
     FileMetadata
 )
-
-from ._queries import (
-    get_message_history_entry_by_id
-)
-
-
-async def create_group(
-    group: GroupModel,
-    db: AsyncIOMotorDatabase
-) -> ObjectId:
-    """
-        Adds a new group to the database. Returns the new id
-    """
-    result = await db.groups.insert_one(
-        group.model_dump(exclude={"id"})
-    )
-    return result.inserted_id
-
-
-async def delete_group(
-    group_id: str,
-    db: AsyncIOMotorDatabase
-) -> UpdateResult:
-    """Deletes a user by id."""
-    return await db.groups.delete_one({"_id": ObjectId(group_id)})
-
-
-async def update_group(
-    group_id: str,
-    updates: dict,
-    db: AsyncIOMotorDatabase
-) -> UpdateResult:
-    updated = await db.groups.update_one(
-        {"_id": ObjectId(group_id)},
-        {"$set": updates}
-    )
-
-    return updated
-
-
-async def create_message_history_entry_in_db(
-    db: AsyncIOMotorDatabase,
-    new_message_history_entry: Optional[MessageHistoryModel] = None,
-) -> ObjectId:
-    if new_message_history_entry is None:
-        new_message_history_entry = MessageHistoryModel(
-            title="Default Title",
-            description="Default Description",
-        )
-
-    result = await db.message_histories.insert_one(
-        new_message_history_entry.model_dump(exclude={"id"})
-    )
-    return result.inserted_id
-
-
-async def update_message_history_entry_in_db(
-    message_history_id: str,
-    updates: dict,
-    db: AsyncIOMotorDatabase
-) -> UpdateResult:
-    update_success = await db.message_histories.update_one(
-        {"_id": ObjectId(message_history_id)},
-        {"$set": updates}
-    )
-    return update_success
-
-
-async def append_message_to_message_history_entry_in_db(
-    message_history_id: str,
-    message: MessageContent,
-    db: AsyncIOMotorDatabase
-):
-    message_history_entry: MessageHistoryModel = (
-        await get_message_history_entry_by_id(
-            message_history_id=message_history_id,
-            db=db
-        )
-    )
-
-    message_history_entry["messages"].append(message.model_dump())
-    success = await update_message_history_entry_in_db(
-        message_history_id=message_history_id,
-        updates=message_history_entry,
-        db=db
-    )
-
-    return success
 
 
 async def upload_file(
