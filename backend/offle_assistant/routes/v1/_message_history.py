@@ -21,13 +21,13 @@ message_history_router = APIRouter()
     "/{message_history_id}",
     response_model=MessageHistoryModel
 )
-async def get_message_history_entry(
+async def get_message_history(
     message_history_id: str,
     user_model: UserModel = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     message_history_dict = (
-        await database.get_message_history_entry_by_id(
+        await database.get_message_history_by_id(
             message_history_id=message_history_id,
             db=db
         )

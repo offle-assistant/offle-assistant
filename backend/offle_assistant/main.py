@@ -26,7 +26,7 @@ from offle_assistant.routes.v1 import (
     message_history_router
 )
 from offle_assistant.database import (
-    create_user_in_db,
+    create_user,
     get_admin_exists
 )
 from offle_assistant.models import (UserModel)
@@ -53,7 +53,7 @@ async def create_default_admin():
             username="admin",
             role="admin"
         )
-        await create_user_in_db(default_admin, db=db)
+        await create_user(default_admin, db=db)
     else:
         logging.info(
             "Admin account already exists"

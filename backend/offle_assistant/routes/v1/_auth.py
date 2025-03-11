@@ -11,11 +11,12 @@ from offle_assistant.auth import (
     verify_password,
     create_access_token
 )
-from offle_assistant.database import (
-    create_user_in_db,
-    get_user_by_email,
-    get_default_group
-)
+import offle_assistant.database as database
+# from offle_assistant.database import (
+#     create_user_in_db,
+#     get_user_by_email,
+#     get_default_group
+# )
 from offle_assistant.dependencies import get_db
 
 auth_router = APIRouter()
@@ -32,14 +33,14 @@ async def register_user(
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """Registers a new user with hashed password."""
-    existing_user = await get_user_by_email(
+    existing_user = await database.get_user_by_email(
         user_email=user.email,
         db=db
     )
     if existing_user:  # Checks if a user exists by email
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    default_group_dict = await get_default_group(db)
+    default_group_dict = await database.get_default_group(db)
     default_group: GroupModel = GroupModel(**default_group_dict)
 
     default_group_name = default_group.name
@@ -55,7 +56,7 @@ async def register_user(
     )
 
     # Plug the user into the database
-    inserted_id = await create_user_in_db(
+    inserted_id = await database.create_user(
         new_user=new_user,
         db=db
     )
@@ -75,7 +76,7 @@ async def login_user(
     """Authenticates a user and returns a JWT token."""
 
     # Find user by email
-    db_user = await get_user_by_email(
+    db_user = await database.get_user_by_email(
         user_email=user.email,
         db=db
     )
