@@ -124,8 +124,7 @@ app.state.llm_server: LLMClient = LLMClient(
     LLMServerConfig(
         hostname="localhost",
         port=11435,
-    ),
-    model_list=["llama3.2"]
+    )
 )
 
 app.state.vector_db: VectorDB = QdrantDB(

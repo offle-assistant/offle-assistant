@@ -1,4 +1,5 @@
-from typing import Union, Generator, List, Dict
+import logging
+from typing import Union, Generator, List, Dict, Optional
 import sys
 
 import ollama
@@ -6,6 +7,11 @@ from ollama import ChatResponse
 from pydantic import BaseModel
 
 from offle_assistant.config import LLMServerConfig
+from offle_assistant.models import (
+    LanguageModelsCollection,
+    TagInfo,
+    ModelDetails
+)
 
 
 class ModelDict(BaseModel):
@@ -16,16 +22,39 @@ class LLMClient:
     def __init__(
         self,
         ollama_server_config: LLMServerConfig,
-        model_list: List[str]
+        language_models: Optional[LanguageModelsCollection] = None
     ):
         ollama_server_url = (
             f'http://{ollama_server_config.hostname}:'
             f'{ollama_server_config.port}'
         )
         self.ollama_client = ollama.Client(ollama_server_url)
+        self.language_models = language_models
 
-        for model in model_list:
-            self.ollama_client.pull(model)
+    def update_models(
+        self,
+        language_models: LanguageModelsCollection
+    ):
+        self.language_models = language_models
+
+    async def pull_models(
+        self,
+    ) -> bool:
+        for model_details in self.language_models.models:
+            model_details: ModelDetails = model_details
+            if model_details.provider == "meta":
+                for tag, tag_info in model_details.model_fields.items():
+                    tag_info: TagInfo = tag_info
+                    model_string = (
+                        model_details.name + ":" + tag_info.name
+                    )
+                    logging.info(f"Pulling model: {model_string}")
+                    try:
+                        self.ollama_client.pull(model_string)
+                    except Exception as e:
+                        print(f"Exception encountered: {e}")
+                        return False  # failure
+        return True  # success
 
     def chat(
         self,

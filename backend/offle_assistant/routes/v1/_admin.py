@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -6,12 +6,13 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from offle_assistant.auth import admin_required
 import offle_assistant.database as database
-from offle_assistant.dependencies import get_db
+from offle_assistant.dependencies import get_db, get_llm_client
 from offle_assistant.models import (
     Role,
     LanguageModelsCollection,
-    ModelDetails
+    ModelDetails,
 )
+from offle_assistant.llm_client import LLMClient
 from offle_assistant.utils import (
     retrieve_available_models
 )
@@ -105,10 +106,16 @@ async def get_all_users(
     "/available-models",
     response_model=LanguageModelsCollection
 )
-async def get_all_available_models(
+async def get_available_models(
     admin: dict = Depends(admin_required),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
+    """
+        This is for retrieving all models available models.
+        That is, the models which exist but are not necessarily
+        available to the users.
+    """
+
     models: LanguageModelsCollection = retrieve_available_models()
     return models
 
@@ -117,7 +124,7 @@ async def get_all_available_models(
     "/available-models/refresh",
     response_model=LanguageModelsCollection
 )
-async def refresh_all_available_models(
+async def refresh_available_models(
     admin: dict = Depends(admin_required),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
@@ -133,6 +140,10 @@ async def add_user_model(
     admin: dict = Depends(admin_required),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
+    """
+        This adds a model to the database of models that
+        are allowed for use by the users.
+    """
     model_id = await database.add_model(
         llm=model_details,
         db=db
@@ -142,3 +153,37 @@ async def add_user_model(
         "message": "Model added successfully",
         "model_id": model_id
     }
+
+
+@admin_router.post("/available-models/pull")
+async def pull_allowed_models(
+    llm_client: LLMClient = Depends(get_llm_client),
+    admin: Dict = Depends(admin_required),
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    """
+        When a model is set as allowed in the database,
+        it also needs to get pulled down to local storage
+        before it can be used. This route pulls down the
+        models.
+    """
+    allowed_models: LanguageModelsCollection = (
+        await database.get_allowed_models(
+            db=db
+        )
+    )
+
+    llm_client.update_models(
+        language_models=allowed_models
+    )
+    success = await llm_client.pull_models()
+
+    if success:
+        return {
+            "message": "Models pulled successfully",
+        }
+    else:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to pull models."
+        )
