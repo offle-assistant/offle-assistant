@@ -110,17 +110,40 @@ async def find_files_by_tag(
 
 async def download_file_by_id(
     file_id,
-    output_path: str,
+    user_groups: List[str],
     db: AsyncIOMotorDatabase
 ):
     """API Endpoint to download a file from GridFS"""
     fs_bucket = AsyncIOMotorGridFSBucket(db)
-    stream = await fs_bucket.open_download_stream(ObjectId(file_id))
+
+    try:
+        # Open the file stream from GridFS
+        stream = await fs_bucket.open_download_stream(ObjectId(file_id))
+    except Exception:
+        raise FileNotFoundError
+
+    # Get filename and content type from metadata
+    file_doc = await db["fs.files"].find_one({"_id": ObjectId(file_id)})
+    filename = file_doc["filename"] if file_doc else f"{file_id}.bin"
+
+    file_groups: List[str] = file_doc.get("metadata", {}).get("groups", [])
+
+    # Nifty way of seeing if there is a common member between 2 lists
+    has_permission = bool(set(file_groups) & set(user_groups))
+
+    if not has_permission:
+        raise PermissionError
+
+    content_type = file_doc.get("metadata", {}).get("content_type")
+    if not content_type:
+        content_type, _ = mimetypes.guess_type(filename)
+    if not content_type:
+        content_type = "application/octet-stream"  # Fallback
 
     return StreamingResponse(
-        stream, media_type="application/octet-stream", headers={
-            "Content-Disposition": f'attachment; filename="{file_id}"'
-        }
+        stream,
+        media_type=content_type,
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
 
