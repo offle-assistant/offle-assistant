@@ -8,9 +8,17 @@ from offle_assistant.auth import admin_required
 import offle_assistant.database as database
 from offle_assistant.dependencies import get_db
 from offle_assistant.models import Role
+from offle_assistant.utils import (
+    AvailableLanguageModels,
+    retrieve_available_models
+)
 
 admin_router = APIRouter()
 
+
+##########################################
+# USER OPERATIONS
+##########################################
 
 class RoleUpdateRequest(BaseModel):
     new_role: str
@@ -85,3 +93,32 @@ async def get_all_users(
          "email": user["email"],
          "role": user["role"]} for user in users
     ]
+
+
+##########################################
+# LANGUAGE MODEL OPERATIONS
+##########################################
+@admin_router.get(
+    "/models",
+    response_model=AvailableLanguageModels
+)
+async def get_available_models(
+    admin: dict = Depends(admin_required),
+    db: AsyncIOMotorDatabase = Depends(get_db)
+):
+    models: AvailableLanguageModels = retrieve_available_models()
+    return models
+
+
+@admin_router.get(
+    "/models/refresh",
+    response_model=AvailableLanguageModels
+)
+async def refresh_available_models(
+    admin: dict = Depends(admin_required),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    models: AvailableLanguageModels = retrieve_available_models(
+        force_update=True
+    )
+    return models
