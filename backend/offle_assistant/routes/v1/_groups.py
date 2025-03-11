@@ -75,29 +75,44 @@ async def create_group(
         raise HTTPException(status_code=400, detail=error_message)
 
 
-@groups_router.post("/update/{group_id}")
-async def update_group(
-    group_id: str,
+@groups_router.post("/update/{group_identifier}")
+async def update_group_by_identifier(
+    group_identifier: str,
     updates: GroupUpdateModel,
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
+    def group_found(_group):
+        if not _group:
+            error_message = "Group not found"
+            logging.error(error_message)
+            raise HTTPException(status_code=404, detail=error_message)
 
-    group = await database.get_group_by_id(
-        group_id=group_id,
-        db=db
-    )
-    if not group:
-        error_message = "Group not found"
-        logging.error(error_message)
-        raise HTTPException(status_code=404, detail=error_message)
+    if ObjectId.is_valid(group_identifier):
+        group = await database.get_group_by_id(
+            group_id=group_identifier,
+            db=db
+        )
+        group_found(group)
+        update_data = updates.model_dump(exclude_unset=True, exclude_none=True)
 
-    update_data = updates.model_dump(exclude_unset=True, exclude_none=True)
+        update_success = await database.update_group_by_id(
+            group_id=group_identifier,
+            updates=update_data,
+            db=db
+        )
+    else:
+        group = await database.get_group_by_name(
+            group_name=group_identifier,
+            db=db
+        )
+        group_found(group)
+        update_data = updates.model_dump(exclude_unset=True, exclude_none=True)
 
-    update_success = await database.update_group(
-        group_id=group_id,
-        updates=update_data,
-        db=db
-    )
+        update_success = await database.update_group_by_name(
+            group_name=group_identifier,
+            updates=update_data,
+            db=db
+        )
 
     if update_success.modified_count == 0:
         error_message = "No changes were made"
@@ -107,15 +122,21 @@ async def update_group(
     return {"message": "Group updated successfully"}
 
 
-@groups_router.post("/delete/{group_id}")
+@groups_router.post("/delete/{group_identifier}")
 async def delete_group(
-    group_id: str,
+    group_identifier: str,
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
-    success = await database.delete_group(
-        group_id=group_id,
-        db=db
-    )
+    if ObjectId.is_valid(group_identifier):
+        success = await database.delete_group_by_id(
+            group_id=group_identifier,
+            db=db
+        )
+    else:
+        success = await database.delete_group_by_name(
+            group_name=group_identifier,
+            db=db
+        )
 
     if not success:
         error_message = "Group not found. No changes were made"

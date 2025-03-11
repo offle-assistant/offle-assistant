@@ -72,7 +72,7 @@ async def get_group_by_name(
 ############################
 
 
-async def update_group(
+async def update_group_by_id(
     group_id: str,
     updates: dict,
     db: AsyncIOMotorDatabase
@@ -85,14 +85,35 @@ async def update_group(
     return updated
 
 
+async def update_group_by_name(
+    group_name: str,
+    updates: dict,
+    db: AsyncIOMotorDatabase
+) -> UpdateResult:
+    updated = await db.groups.update_one(
+        {"name": ObjectId(group_name)},
+        {"$set": updates}
+    )
+
+    return updated
+
+
 ############################
 # Delete
 ############################
 
 
-async def delete_group(
+async def delete_group_by_id(
     group_id: str,
     db: AsyncIOMotorDatabase
 ) -> DeleteResult:
     """Deletes a user by id."""
     return await db.groups.delete_one({"_id": ObjectId(group_id)})
+
+
+async def delete_group_by_name(
+    group_name: str,
+    db: AsyncIOMotorDatabase
+) -> DeleteResult:
+    """Deletes a user by name."""
+    return await db.groups.delete_one({"name": ObjectId(group_name)})

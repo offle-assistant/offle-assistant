@@ -21,8 +21,9 @@ from ._groups import (
     get_group_by_name,
     get_default_group,
     create_group,
-    delete_group,
-    update_group,
+    delete_group_by_id,
+    update_group_by_id,
+    update_group_by_name,
 )
 
 from ._message_histories import (
@@ -71,6 +72,8 @@ __all__ = [
     "get_group_by_id",
     "get_group_by_name",
     "get_default_group",
-    "update_group",
-    "delete_group",
+    "update_group_by_id",
+    "update_group_by_name",
+    "delete_group_by_id",
+    "delete_group_by_name",
 ]
