@@ -7,9 +7,12 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from offle_assistant.auth import admin_required
 import offle_assistant.database as database
 from offle_assistant.dependencies import get_db
-from offle_assistant.models import Role
+from offle_assistant.models import (
+    Role,
+    LanguageModelsCollection,
+    ModelDetails
+)
 from offle_assistant.utils import (
-    AvailableLanguageModels,
     retrieve_available_models
 )
 
@@ -99,26 +102,43 @@ async def get_all_users(
 # LANGUAGE MODEL OPERATIONS
 ##########################################
 @admin_router.get(
-    "/models",
-    response_model=AvailableLanguageModels
+    "/available-models",
+    response_model=LanguageModelsCollection
 )
-async def get_available_models(
+async def get_all_available_models(
     admin: dict = Depends(admin_required),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
-    models: AvailableLanguageModels = retrieve_available_models()
+    models: LanguageModelsCollection = retrieve_available_models()
     return models
 
 
 @admin_router.get(
-    "/models/refresh",
-    response_model=AvailableLanguageModels
+    "/available-models/refresh",
+    response_model=LanguageModelsCollection
 )
-async def refresh_available_models(
+async def refresh_all_available_models(
     admin: dict = Depends(admin_required),
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    models: AvailableLanguageModels = retrieve_available_models(
+    models: LanguageModelsCollection = retrieve_available_models(
         force_update=True
     )
     return models
+
+
+@admin_router.post("/model")
+async def add_user_model(
+    model_details: ModelDetails,
+    admin: dict = Depends(admin_required),
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    model_id = await database.add_model(
+        llm=model_details,
+        db=db
+    )
+
+    return {
+        "message": "Model added successfully",
+        "model_id": model_id
+    }
