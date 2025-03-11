@@ -14,7 +14,7 @@ from offle_assistant.models import (
 ############################
 
 
-async def create_message_history_entry_in_db(
+async def create_message_history(
     db: AsyncIOMotorDatabase,
     new_message_history_entry: Optional[MessageHistoryModel] = None,
 ) -> ObjectId:
@@ -35,7 +35,7 @@ async def create_message_history_entry_in_db(
 ############################
 
 
-async def get_message_history_entry_by_id(
+async def get_message_history_by_id(
     message_history_id: str,
     db: AsyncIOMotorDatabase
 ) -> Optional[Dict]:
@@ -45,7 +45,7 @@ async def get_message_history_entry_by_id(
     )
 
 
-async def get_message_history_entry_without_message_chain(
+async def get_message_history_without_message_chain_by_id(
     message_history_id: str,
     db: AsyncIOMotorDatabase
 ) -> Optional[Dict]:
@@ -110,7 +110,7 @@ async def get_message_history_list_by_user_id(
 ############################
 
 
-async def update_message_history_entry_in_db(
+async def update_message_history_by_id(
     message_history_id: str,
     updates: dict,
     db: AsyncIOMotorDatabase
@@ -122,22 +122,22 @@ async def update_message_history_entry_in_db(
     return update_success
 
 
-async def append_message_to_message_history_entry_in_db(
+async def append_message_to_message_history_by_id(
     message_history_id: str,
     message: MessageContent,
     db: AsyncIOMotorDatabase
 ):
-    message_history_entry: MessageHistoryModel = (
-        await get_message_history_entry_by_id(
+    message_history: MessageHistoryModel = (
+        await get_message_history_by_id(
             message_history_id=message_history_id,
             db=db
         )
     )
 
-    message_history_entry["messages"].append(message.model_dump())
-    success = await update_message_history_entry_in_db(
+    message_history["messages"].append(message.model_dump())
+    success = await update_message_history_by_id(
         message_history_id=message_history_id,
-        updates=message_history_entry,
+        updates=message_history,
         db=db
     )
 
@@ -147,3 +147,13 @@ async def append_message_to_message_history_entry_in_db(
 ############################
 # DELETE
 ############################
+
+
+async def delete_message_history_by_id(
+    message_history_id: str,
+    db: AsyncIOMotorDatabase
+) -> DeleteResult:
+    delete_result = await db.message_histories.delete_one(
+        {"_id": ObjectId(message_history_id)}
+    )
+    return delete_result

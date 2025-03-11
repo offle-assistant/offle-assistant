@@ -27,12 +27,13 @@ from ._groups import (
 )
 
 from ._message_histories import (
-    create_message_history_entry_in_db,
-    get_message_history_entry_by_id,
+    create_message_history,
+    get_message_history_by_id,
     get_message_history_list_by_user_id,
-    get_message_history_entry_without_message_chain,
-    update_message_history_entry_in_db,
-    append_message_to_message_history_entry_in_db,
+    get_message_history_without_message_chain_by_id,
+    update_message_history_by_id,
+    append_message_to_message_history_by_id,
+    delete_message_history_by_id,
 )
 
 from ._files import (
@@ -56,12 +57,13 @@ __all__ = [
     "get_personas_by_creator_id",
     "update_persona_by_id",
     "delete_persona_by_id",
-    "create_message_history_entry_in_db",
-    "get_message_history_entry_by_id",
+    "create_message_history",
+    "get_message_history_by_id",
     "get_message_history_list_by_user_id",
-    "get_message_history_entry_without_message_chain",
-    "update_message_history_entry_in_db",
-    "append_message_to_message_history_entry_in_db",
+    "get_message_history_without_message_chain_by_id",
+    "update_message_history_by_id",
+    "append_message_to_message_history_by_id",
+    "delete_message_history_by_id",
     "upload_file",
     "get_file_metadata",
     "find_files_by_tag",

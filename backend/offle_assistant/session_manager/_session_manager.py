@@ -6,10 +6,11 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from offle_assistant.persona import Persona
 from offle_assistant.models import PersonaModel, MessageHistoryModel
-from offle_assistant.database import (
-    get_persona_by_id,
-    get_message_history_entry_by_id
-)
+import offle_assistant.database as database
+# from offle_assistant.database import (
+#     get_persona_by_id,
+#     get_message_history_entry_by_id
+# )
 
 redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
 
@@ -31,7 +32,7 @@ class SessionManager:
         if (cached_persona := redis_client.get(persona_key)) is not None:
             return pickle.loads(cached_persona)
 
-        persona_dict: dict = await get_persona_by_id(
+        persona_dict: dict = await database.get_persona_by_id(
             persona_id,
             db=db
         )
@@ -40,7 +41,7 @@ class SessionManager:
         persona_dict["user_id"] = str(persona_dict["user_id"])
         persona_dict["creator_id"] = str(persona_dict["creator_id"])
         persona_model: PersonaModel = PersonaModel(**persona_dict)
-        message_history_dict = await get_message_history_entry_by_id(
+        message_history_dict = await database.get_message_history_by_id(
             message_history_id,
             db=db
         )

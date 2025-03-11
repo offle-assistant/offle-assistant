@@ -16,19 +16,6 @@ from offle_assistant.models import (
 )
 from offle_assistant.persona import Persona, PersonaChatResponse
 import offle_assistant.database as database
-# from offle_assistant.database import (
-#     get_personas_by_creator_id,
-#     # get_user_by_id,
-#     create_persona_in_db,
-#     get_persona_by_id,
-#     update_persona_in_db,
-#     create_message_history_entry_in_db,
-#     get_message_history_list_by_user_id,
-#     update_message_history_entry_in_db,
-#     append_message_to_message_history_entry_in_db,
-#     update_user_by_id,
-#     get_message_history_entry_without_message_chain
-# )
 from offle_assistant.session_manager import SessionManager
 from offle_assistant.llm_client import LLMClient
 from offle_assistant.vector_db import (
@@ -178,7 +165,7 @@ async def get_persona_message_history(
     message_history_list: List[MessageHistoryModel] = []
     for message_history_id in message_history_id_list:
         message_history: MessageHistoryModel = (
-            await database.get_message_history_entry_without_message_chain(
+            await database.get_message_history_without_message_chain_by_id(
                 message_history_id=message_history_id,
                 db=db
             )
@@ -215,7 +202,7 @@ async def chat_with_persona(
     # Check if there is a provided message_history_id
     if message_history_id is None:
         # If not, create a new entry in the message_history_collection
-        message_history_id = await database.create_message_history_entry_in_db(
+        message_history_id = await database.create_message_history(
             db=db
         )
 
@@ -252,7 +239,7 @@ async def chat_with_persona(
             status_code=400, detail="Message content is required"
         )
 
-    success = await database.append_message_to_message_history_entry_in_db(
+    success = await database.append_message_to_message_history_by_id(
         message_history_id=message_history_id,
         message=MessageContent(
             role="user",
@@ -277,7 +264,7 @@ async def chat_with_persona(
     most_recent_message: MessageContent = MessageContent(
         **persona.message_chain[-1]
     )
-    success = await database.append_message_to_message_history_entry_in_db(
+    success = await database.append_message_to_message_history_by_id(
         message_history_id=message_history_id,
         message=most_recent_message,
         db=db
