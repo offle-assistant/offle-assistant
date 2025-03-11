@@ -1,8 +1,12 @@
+import mimetypes
 import logging
+from typing import List
 
 from bson import ObjectId
 from fastapi.responses import StreamingResponse
-from fastapi import UploadFile
+from fastapi import (
+    UploadFile,
+)
 from motor.motor_asyncio import (
     AsyncIOMotorGridFSBucket,
     AsyncIOMotorDatabase
@@ -10,7 +14,9 @@ from motor.motor_asyncio import (
 
 from offle_assistant.models import (
     FileMetadata,
+    GroupModel
 )
+import offle_assistant.database as database
 
 
 ############################
@@ -20,15 +26,52 @@ from offle_assistant.models import (
 
 async def upload_file(
     file: UploadFile,
-    metadata: FileMetadata,
+    description: str,
+    groups: list,
+    tags: List[str],
+    user_id: str,
+    user_groups: List[str],
     db: AsyncIOMotorDatabase
 ):
+    # Ensure at least one group exists
+    if not groups:
+        default_group_dict = await database.get_default_group(db)
+        default_group: GroupModel = GroupModel(**default_group_dict)
+        groups.append(default_group.name)
+
     fs_bucket = AsyncIOMotorGridFSBucket(db)
+
+    # Double check that the content type passed through is correct/best
+    content_type = file.content_type
+    if not content_type or content_type == "application/octet-stream":
+        guessed_type, _ = mimetypes.guess_type(file.filename)
+        content_type = (
+            guessed_type if guessed_type else "application/octet-stream"
+        )
+
+    user_groups: List[str] = user_groups
+
+    # Nifty way of seeing if there is a common member between 2 lists
+    has_permission = bool(set(groups) & set(user_groups))
+
+    if not has_permission:
+        raise PermissionError
+
+    file_metadata = FileMetadata(
+        filename=file.filename,
+        uploaded_by=user_id,
+        content_type=content_type,
+        description=description,
+        tags=tags,
+        groups=groups
+    )
+
+    file_metadata_dict = file_metadata.model_dump()
 
     file_id = await fs_bucket.upload_from_stream(
         filename=file.filename,
         source=file.file,
-        metadata=metadata
+        metadata=file_metadata_dict
     )
 
     logging.info("File uploaded with id: %s", str(file_id))
@@ -40,7 +83,7 @@ async def upload_file(
 # RETRIEVE
 ############################
 
-async def get_file_metadata(
+async def get_file_metadata_by_id(
     file_id,
     db: AsyncIOMotorDatabase
 ):
@@ -65,7 +108,7 @@ async def find_files_by_tag(
     return results
 
 
-async def download_file(
+async def download_file_by_id(
     file_id,
     output_path: str,
     db: AsyncIOMotorDatabase
@@ -90,7 +133,7 @@ async def download_file(
 ############################
 
 
-async def delete_file(
+async def delete_file_by_id(
     file_id,
     db: AsyncIOMotorDatabase
 ):

@@ -35,47 +35,24 @@ async def upload_document(
     user_model: UserModel = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_db)
 ) -> dict:
-    """Handles file uploads with metadata"""
-    # Ensure at least one group exists
-    if not groups:
-        default_group_dict = await database.get_default_group(db)
-        default_group: GroupModel = GroupModel(**default_group_dict)
-        groups.append(default_group.name)
+    """Handles file uploads"""
 
-    # Double check that the content type passed through is correct/best
-    content_type = file.content_type
-    if not content_type or content_type == "application/octet-stream":
-        guessed_type, _ = mimetypes.guess_type(file.filename)
-        content_type = (
-            guessed_type if guessed_type else "application/octet-stream"
+    try:
+        file_id = await database.upload_file(
+            file,
+            description=description,
+            groups=groups,
+            tags=tags,
+            user_id=user_model.id,
+            user_groups=user_model.groups,
+            db=db
         )
-
-    user_groups: List[str] = user_model.groups
-
-    # Nifty way of seeing if there is a common member between 2 lists
-    has_permission = bool(set(groups) & set(user_groups))
-
-    if not has_permission:
+    except PermissionError:
         raise HTTPException(
             status_code=403,
             detail="User doesn't have permissions to upload to this group"
         )
 
-    # Create file metadata
-    file_metadata = FileMetadata(
-        filename=file.filename,
-        uploaded_by=user_model.id,
-        content_type=content_type,
-        description=description,
-        tags=tags,
-        groups=groups
-    )
-
-    file_id = await database.upload_file(
-        file,
-        file_metadata.model_dump(),
-        db
-    )
     return {"file_id": file_id, "message": "Successfully uploaded file"}
 
 

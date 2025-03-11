@@ -39,9 +39,9 @@ from ._message_histories import (
 from ._files import (
     upload_file,
     find_files_by_tag,
-    get_file_metadata,
-    download_file,
-    delete_file,
+    get_file_metadata_by_id,
+    download_file_by_id,
+    delete_file_by_id,
 )
 
 __all__ = [
@@ -65,10 +65,10 @@ __all__ = [
     "append_message_to_message_history_by_id",
     "delete_message_history_by_id",
     "upload_file",
-    "get_file_metadata",
+    "get_file_metadata_by_id",
     "find_files_by_tag",
-    "download_file",
-    "delete_file",
+    "download_file_by_id",
+    "delete_file_by_id",
     "create_group",
     "get_group",
     "get_group_by_id",
