@@ -17,7 +17,7 @@ from offle_assistant.models import (
 ############################
 
 
-async def create_persona_in_db(
+async def create_persona(
     persona: PersonaModel,
     creator_id: str,
     db: AsyncIOMotorDatabase
@@ -77,7 +77,7 @@ async def get_personas_by_creator_id(
 ############################
 
 
-async def update_persona_in_db(
+async def update_persona_by_id(
     persona_id: str,
     updates: dict,
     db: AsyncIOMotorDatabase

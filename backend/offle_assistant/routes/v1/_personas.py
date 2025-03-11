@@ -15,19 +15,20 @@ from offle_assistant.models import (
     MessageHistoryModel,
 )
 from offle_assistant.persona import Persona, PersonaChatResponse
-from offle_assistant.database import (
-    get_personas_by_creator_id,
-    # get_user_by_id,
-    create_persona_in_db,
-    get_persona_by_id,
-    update_persona_in_db,
-    create_message_history_entry_in_db,
-    get_message_history_list_by_user_id,
-    update_message_history_entry_in_db,
-    append_message_to_message_history_entry_in_db,
-    update_user_by_id,
-    get_message_history_entry_without_message_chain
-)
+import offle_assistant.database as database
+# from offle_assistant.database import (
+#     get_personas_by_creator_id,
+#     # get_user_by_id,
+#     create_persona_in_db,
+#     get_persona_by_id,
+#     update_persona_in_db,
+#     create_message_history_entry_in_db,
+#     get_message_history_list_by_user_id,
+#     update_message_history_entry_in_db,
+#     append_message_to_message_history_entry_in_db,
+#     update_user_by_id,
+#     get_message_history_entry_without_message_chain
+# )
 from offle_assistant.session_manager import SessionManager
 from offle_assistant.llm_client import LLMClient
 from offle_assistant.vector_db import (
@@ -49,7 +50,7 @@ async def get_user_personas(
 ):
     """Returns a dictionary of all personas created by the logged-in user."""
     # This is a dict {"persona_id": "persona_name"}
-    user_personas = await get_personas_by_creator_id(
+    user_personas = await database.get_personas_by_creator_id(
         user_id=user_model.id,
         db=db
     )
@@ -68,7 +69,7 @@ async def get_persona(
 ):
     """Returns a persona by id."""
 
-    persona_dict: dict = await get_persona_by_id(
+    persona_dict: dict = await database.get_persona_by_id(
         persona_id=persona_id,
         db=db
     )
@@ -97,7 +98,7 @@ async def create_persona(
     # Ensure the user exists in the database
     creator_id = user.id
 
-    persona_id = await create_persona_in_db(
+    persona_id = await database.create_persona(
         persona=persona,
         creator_id=creator_id,
         db=db
@@ -121,7 +122,7 @@ async def update_persona(
         and admins to update any persona.
     """
 
-    persona = await get_persona_by_id(
+    persona = await database.get_persona_by_id(
         persona_id=persona_id,
         db=db
     )
@@ -137,7 +138,7 @@ async def update_persona(
 
     update_data = updates.model_dump(exclude_unset=True, exclude_none=True)
 
-    update_success = await update_persona_in_db(
+    update_success = await database.update_persona_by_id(
         persona_id=persona_id,
         updates=update_data,
         db=db
@@ -166,16 +167,18 @@ async def get_persona_message_history(
     """
 
     user_id = str(user_model.id)
-    message_history_id_list: List = await get_message_history_list_by_user_id(
-        user_id=user_id,
-        persona_id=persona_id,
-        db=db
+    message_history_id_list: List = (
+        await database.get_message_history_list_by_user_id(
+            user_id=user_id,
+            persona_id=persona_id,
+            db=db
+        )
     )
 
     message_history_list: List[MessageHistoryModel] = []
     for message_history_id in message_history_id_list:
         message_history: MessageHistoryModel = (
-            await get_message_history_entry_without_message_chain(
+            await database.get_message_history_entry_without_message_chain(
                 message_history_id=message_history_id,
                 db=db
             )
@@ -212,7 +215,9 @@ async def chat_with_persona(
     # Check if there is a provided message_history_id
     if message_history_id is None:
         # If not, create a new entry in the message_history_collection
-        message_history_id = await create_message_history_entry_in_db(db=db)
+        message_history_id = await database.create_message_history_entry_in_db(
+            db=db
+        )
 
         # And then, ensure that there is a key for this persona_id on the user
         user_model.persona_message_history.root.setdefault(str(persona_id), [])
@@ -222,7 +227,7 @@ async def chat_with_persona(
             str(message_history_id)
         )
 
-        success = await update_user_by_id(
+        success = await database.update_user_by_id(
             user_id=user_id,
             updates=user_model.model_dump(),
             db=db
@@ -247,7 +252,7 @@ async def chat_with_persona(
             status_code=400, detail="Message content is required"
         )
 
-    success = await append_message_to_message_history_entry_in_db(
+    success = await database.append_message_to_message_history_entry_in_db(
         message_history_id=message_history_id,
         message=MessageContent(
             role="user",
@@ -272,7 +277,7 @@ async def chat_with_persona(
     most_recent_message: MessageContent = MessageContent(
         **persona.message_chain[-1]
     )
-    success = await append_message_to_message_history_entry_in_db(
+    success = await database.append_message_to_message_history_entry_in_db(
         message_history_id=message_history_id,
         message=most_recent_message,
         db=db

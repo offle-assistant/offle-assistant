@@ -9,8 +9,8 @@ from ._users import (
 )
 
 from ._personas import (
-    create_persona_in_db,
-    update_persona_in_db,
+    create_persona,
+    update_persona_by_id,
     get_personas_by_creator_id,
     get_persona_by_id,
     delete_persona_by_id
@@ -50,10 +50,10 @@ __all__ = [
     "update_user_by_id",
     "update_user_role_by_id",
     "delete_user_by_id",
-    "create_persona_in_db",
+    "create_persona",
     "get_persona_by_id",
     "get_personas_by_creator_id",
-    "update_persona_in_db",
+    "update_persona_by_id",
     "delete_persona_by_id",
     "create_message_history_entry_in_db",
     "get_message_history_entry_by_id",
