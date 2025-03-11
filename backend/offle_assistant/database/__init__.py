@@ -1,11 +1,11 @@
 from ._users import (
+    create_user,
     get_user_by_id,
     get_user_by_email,
-    delete_user_in_db,
-    update_user_role_in_db,
-    update_user_in_db,
-    create_user_in_db,
     get_admin_exists,
+    update_user_role_by_id,
+    update_user_by_id,
+    delete_user_by_id,
 )
 
 from ._personas import (
@@ -43,13 +43,13 @@ from ._files import (
 )
 
 __all__ = [
-    "create_user_in_db",
+    "create_user",
     "get_user_by_email",
     "get_user_by_id",
     "get_admin_exists",
-    "update_user_in_db",
-    "update_user_role_in_db",
-    "delete_user_in_db",
+    "update_user_by_id",
+    "update_user_role_by_id",
+    "delete_user_by_id",
     "create_persona_in_db",
     "get_persona_by_id",
     "get_personas_by_creator_id",

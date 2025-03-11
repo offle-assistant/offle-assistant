@@ -25,7 +25,7 @@ from offle_assistant.database import (
     get_message_history_list_by_user_id,
     update_message_history_entry_in_db,
     append_message_to_message_history_entry_in_db,
-    update_user_in_db,
+    update_user_by_id,
     get_message_history_entry_without_message_chain
 )
 from offle_assistant.session_manager import SessionManager
@@ -222,7 +222,7 @@ async def chat_with_persona(
             str(message_history_id)
         )
 
-        success = await update_user_in_db(
+        success = await update_user_by_id(
             user_id=user_id,
             updates=user_model.model_dump(),
             db=db

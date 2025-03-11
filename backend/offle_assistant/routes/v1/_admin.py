@@ -5,12 +5,9 @@ from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 from offle_assistant.auth import admin_required
-from offle_assistant.models import Role
-from offle_assistant.database import (
-    delete_user_in_db,
-    update_user_role_in_db
-)
+import offle_assistant.database as database
 from offle_assistant.dependencies import get_db
+from offle_assistant.models import Role
 
 admin_router = APIRouter()
 
@@ -26,7 +23,7 @@ async def delete_user(
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """Allows an admin to delete a user."""
-    deleted = await delete_user_in_db(
+    deleted = await database.delete_user_by_id(
         user_id=user_id,
         db=db
     )
@@ -49,7 +46,7 @@ async def update_user_role(
     if new_role not in Role.__args__:
         raise HTTPException(status_code=400, detail="Invalid role")
 
-    update_success = await update_user_role_in_db(
+    update_success = await database.update_user_role_by_id(
         user_id=user_id,
         new_role=new_role,
         db=db

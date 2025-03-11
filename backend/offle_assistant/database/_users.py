@@ -15,7 +15,7 @@ from offle_assistant.models import (
 ############################
 
 
-async def create_user_in_db(
+async def create_user(
     new_user: UserModel,
     db: AsyncIOMotorDatabase
 ) -> ObjectId:
@@ -62,7 +62,7 @@ async def get_user_by_email(
 ############################
 
 
-async def update_user_role_in_db(
+async def update_user_role_by_id(
     user_id: str,
     new_role: Role,
     db: AsyncIOMotorDatabase
@@ -74,7 +74,7 @@ async def update_user_role_in_db(
     )
 
 
-async def update_user_in_db(
+async def update_user_by_id(
     user_id: str,
     updates: dict,
     db: AsyncIOMotorDatabase
@@ -92,7 +92,7 @@ async def update_user_in_db(
 ############################
 
 
-async def delete_user_in_db(
+async def delete_user_by_id(
     user_id: str,
     db: AsyncIOMotorDatabase
 ) -> DeleteResult:
