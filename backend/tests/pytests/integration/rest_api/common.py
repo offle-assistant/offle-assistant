@@ -41,11 +41,13 @@ async def get_test_user_token(test_client, test_db) -> str:
 
 
 async def create_test_user(test_client) -> str:
-    uuid_str = uuid1()
+    uuid_str = str(uuid1())
     user_email = f"{uuid_str}@example.com"
+    username = uuid_str[:29]
     password = "securepassword"
 
     reg_user_payload = {
+        "username": username,
         "email": user_email,
         "password": password,
     }

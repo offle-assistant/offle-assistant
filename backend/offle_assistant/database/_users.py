@@ -53,8 +53,16 @@ async def get_user_by_email(
     user_email: str,
     db: AsyncIOMotorDatabase
 ) -> Optional[Dict]:
-    """Fetch a user from the database by their _id."""
+    """Fetch a user from the database by their email."""
     return await db.users.find_one({"email": user_email})
+
+
+async def get_user_by_username(
+    username: str,
+    db: AsyncIOMotorDatabase
+) -> Optional[Dict]:
+    """Fetch a user from the database by their username."""
+    return await db.users.find_one({"username": username})
 
 
 ############################

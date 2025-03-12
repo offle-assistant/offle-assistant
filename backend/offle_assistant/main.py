@@ -69,6 +69,9 @@ async def create_indexes(db: AsyncIOMotorClient):
     """Ensure indexes are created on startup."""
     await db.groups.create_index([("name", 1)], unique=True)
 
+    await db.users.create_index([("username", 1)], unique=True)
+    await db.users.create_index([("email", 1)], unique=True)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

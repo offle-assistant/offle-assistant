@@ -1,5 +1,4 @@
 from ._auth import (
-    AuthModel,
     register_user,
     login_user,
     auth_router,

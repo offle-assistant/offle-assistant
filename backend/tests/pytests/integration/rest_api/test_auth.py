@@ -14,6 +14,7 @@ async def test_register_user(
     test_db,
 ):
     payload = {
+        "username": "test_user",
         "email": "test_user@example.com",
         "password": "securepassword"
     }
@@ -23,6 +24,33 @@ async def test_register_user(
     data = response.json()
     assert data["message"] == "User registered"
     await test_db.users.drop()
+
+
+@pytest.mark.asyncio
+async def test_register_user_failure_duplicate_username(
+    test_client,
+    test_db,
+):
+    payload_1 = {
+        "email": "test_user@example.com",
+        "username": "rich",
+        "password": "securepassword",
+    }
+
+    payload_2 = {
+        "email": "test2_user@example.com",
+        "username": "rich",
+        "password": "securepassword",
+    }
+
+    response = await test_client.post("/auth/register", json=payload_1)
+    response = await test_client.post("/auth/register", json=payload_2)
+
+    assert response.status_code == 400
+    # assert response.status_code == 200
+    # data = response.json()
+    # assert data["message"] == "User registered"
+    # await test_db.users.drop()
 
 
 @pytest.mark.asyncio
@@ -37,6 +65,7 @@ async def test_login_user_success(
     )
 
     payload = {
+        "username": "test_user",
         "email": "test_user@example.com",
         "password": "securepassword",
     }
@@ -64,6 +93,7 @@ async def test_login_user_failure(
     await test_db.users.drop()
 
     payload = {
+        "username": "test_user",
         "email": "test_user@example.com",
         "password": "securepassword",
     }

@@ -1,3 +1,4 @@
+from ._auth import UserLogin, UserRegistration
 from ._user import UserModel, Role
 from ._persona import PersonaModel, PersonaUpdateModel
 from ._common_utils import PyObjectId
@@ -9,6 +10,8 @@ from ._language_models import LanguageModelsCollection, TagInfo, ModelDetails
 
 
 __all__ = [
+    "UserLogin",
+    "UserRegistration",
     "UserModel",
     "Role",
     "PersonaModel",
@@ -23,5 +26,5 @@ __all__ = [
     "GroupUpdateModel",
     "LanguageModelsCollection",
     "TagInfo",
-    "ModelDetails"
+    "ModelDetails",
 ]

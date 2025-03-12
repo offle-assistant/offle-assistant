@@ -6,6 +6,7 @@ from ._users import (
     update_user_role_by_id,
     update_user_by_id,
     delete_user_by_id,
+    get_user_by_username,
 )
 
 from ._personas import (
@@ -54,6 +55,7 @@ __all__ = [
     "create_user",
     "get_user_by_email",
     "get_user_by_id",
+    "get_user_by_username",
     "get_admin_exists",
     "update_user_by_id",
     "update_user_role_by_id",

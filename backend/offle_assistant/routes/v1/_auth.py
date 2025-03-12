@@ -2,10 +2,14 @@ from datetime import timedelta
 
 # from bson import ObjectId
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
-from offle_assistant.models import UserModel, GroupModel
+from offle_assistant.models import (
+    UserModel,
+    GroupModel,
+    UserLogin,
+    UserRegistration
+)
 from offle_assistant.auth import (
     hash_password,
     verify_password,
@@ -22,14 +26,9 @@ from offle_assistant.dependencies import get_db
 auth_router = APIRouter()
 
 
-class AuthModel(BaseModel):
-    email: str
-    password: str
-
-
 @auth_router.post("/register")
 async def register_user(
-    user: AuthModel,
+    user: UserRegistration,
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """Registers a new user with hashed password."""
@@ -39,6 +38,16 @@ async def register_user(
     )
     if existing_user:  # Checks if a user exists by email
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    existing_user = await database.get_user_by_username(
+        username=user.username,
+        db=db
+    )
+    if existing_user:  # Checks if a user exists by email
+        raise HTTPException(
+            status_code=400,
+            detail="Username already registered"
+        )
 
     default_group_dict = await database.get_default_group(db)
     default_group: GroupModel = GroupModel(**default_group_dict)
@@ -50,7 +59,7 @@ async def register_user(
     new_user = UserModel(
         email=user.email,
         hashed_password=hashed_password,
-        username=user.email.split("@")[0],
+        username=user.username,
         groups=[default_group_name],
         role="user"
     )
@@ -70,7 +79,7 @@ async def register_user(
 
 @auth_router.post("/login")
 async def login_user(
-    user: AuthModel,
+    user: UserLogin,
     db: AsyncIOMotorDatabase = Depends(get_db)
 ):
     """Authenticates a user and returns a JWT token."""
