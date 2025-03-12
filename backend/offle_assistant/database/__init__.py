@@ -16,6 +16,12 @@ from ._personas import (
     delete_persona_by_id
 )
 
+from ._language_models import (
+    add_model,
+    get_allowed_models,
+    delete_model_by_id
+)
+
 from ._groups import (
     get_group_by_id,
     get_group_by_name,
@@ -57,6 +63,9 @@ __all__ = [
     "get_personas_by_creator_id",
     "update_persona_by_id",
     "delete_persona_by_id",
+    "add_model",
+    "get_allowed_models",
+    "delete_model_by_id",
     "create_message_history",
     "get_message_history_by_id",
     "get_message_history_list_by_user_id",

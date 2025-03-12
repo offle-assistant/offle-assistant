@@ -5,6 +5,7 @@ from ._messages import MessageHistoryModel, MessageContent
 from ._rag import RAGConfig, QueryMetric
 from ._files import FileMetadata
 from ._groups import GroupModel, GroupUpdateModel
+from ._language_models import LanguageModelsCollection, TagInfo, ModelDetails
 
 
 __all__ = [
@@ -19,5 +20,8 @@ __all__ = [
     "QueryMetric",
     "FileMetadata",
     "GroupModel",
-    "GroupUpdateModel"
+    "GroupUpdateModel",
+    "LanguageModelsCollection",
+    "TagInfo",
+    "ModelDetails"
 ]
