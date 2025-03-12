@@ -43,7 +43,7 @@ class LLMClient:
         for model_details in self.language_models.models:
             model_details: ModelDetails = model_details
             if model_details.provider == "meta":
-                for tag, tag_info in model_details.model_fields.items():
+                for tag_info in model_details.tags:
                     tag_info: TagInfo = tag_info
                     model_string = (
                         model_details.name + ":" + tag_info.name

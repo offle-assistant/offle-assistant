@@ -23,6 +23,7 @@ class ModelDetails(BaseModel):
         Represents details about an AI model.
     """
 
+    model_config = {"from_attributes": True}
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     name: str
     provider: str

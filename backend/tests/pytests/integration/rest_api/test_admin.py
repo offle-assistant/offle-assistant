@@ -1,8 +1,16 @@
 import pytest
 
+from bson import ObjectId
+
 from offle_assistant.main import app, create_default_admin
 from offle_assistant.auth import (
     get_current_user,
+)
+
+from offle_assistant.models import (
+    LanguageModelsCollection,
+    ModelDetails,
+    TagInfo
 )
 
 from .common import (
@@ -210,3 +218,116 @@ async def test_promote_user_failure_invalid_role(
 
     data = user_update_response.json()
     assert data["detail"] == "Invalid role"
+
+
+@pytest.mark.asyncio
+async def test_get_available_models_success(
+    test_client,
+    test_db,
+    override_get_current_user_admin
+):
+    app.dependency_overrides[get_current_user] = (
+        override_get_current_user_admin
+    )
+
+    headers = {"Authorization": "Bearer dummy_token"}
+
+    available_models_response = await test_client.get(
+        "/admin/available-models",
+        headers=headers
+    )
+
+    assert available_models_response.status_code == 200
+    data = available_models_response.json()
+    llm_collection: LanguageModelsCollection = LanguageModelsCollection(**data)
+
+    assert len(llm_collection.models) > 1
+
+
+@pytest.mark.asyncio
+async def test_set_allowed_model_success(
+    test_client,
+    test_db,
+    override_get_current_user_admin
+):
+    app.dependency_overrides[get_current_user] = (
+        override_get_current_user_admin
+    )
+
+    tag_info: TagInfo = TagInfo(
+        name="1b-instruct-q2_K",
+        hash="3718017cfd4e",
+        size="581MB",
+        updated="5 months ago"
+    )
+
+    new_model: ModelDetails = ModelDetails(
+        name="llama3.2",
+        provider="meta",
+        api="ollama",
+        tags=[tag_info]
+    )
+
+    headers = {"Authorization": "Bearer dummy_token"}
+
+    payload = new_model.model_dump()
+
+    add_model_response = await test_client.post(
+        "/admin/model",
+        headers=headers,
+        json=payload,
+    )
+
+    assert add_model_response.status_code == 200
+    data = add_model_response.json()
+    assert data["message"] == "Model added successfully"
+    assert ObjectId.is_valid(data["model_id"])
+
+
+@pytest.mark.asyncio
+async def test_pull_allowed_models_success(
+    test_client,
+    test_db,
+    override_get_current_user_admin
+):
+    app.dependency_overrides[get_current_user] = (
+        override_get_current_user_admin
+    )
+
+    tag_info: TagInfo = TagInfo(
+        name="1b-instruct-q2_K",
+        hash="3718017cfd4e",
+        size="581MB",
+        updated="5 months ago"
+    )
+
+    new_model: ModelDetails = ModelDetails(
+        name="llama3.2",
+        provider="meta",
+        api="ollama",
+        tags=[tag_info]
+    )
+
+    headers = {"Authorization": "Bearer dummy_token"}
+
+    payload = new_model.model_dump()
+
+    add_model_response = await test_client.post(
+        "/admin/model",
+        headers=headers,
+        json=payload,
+    )
+
+    assert add_model_response.status_code == 200
+    data = add_model_response.json()
+    assert data["message"] == "Model added successfully"
+    assert ObjectId.is_valid(data["model_id"])
+
+    pull_response = await test_client.post(
+        "/admin/available-models/pull",
+        headers=headers,
+    )
+
+    assert pull_response.status_code == 200
+    data = pull_response.json()
+    assert data["message"] == "Models pulled successfully"

@@ -73,7 +73,7 @@ def fetch_model_tag_list(model_url) -> List[TagInfo]:
 
 
 def retrieve_available_models(
-    force_update=True
+    force_update=False
 ) -> LanguageModelsCollection:
     """
         This is really just a place holder. It only grabs ollama models rn.
@@ -84,11 +84,13 @@ def retrieve_available_models(
 
     with FileLock(lock_file):
         if (cache.exists()) and (force_update is False):
+            print("Found existing json file.")
             with open(cache, "r") as f:
                 data = json.load(f)
-                return LanguageModelsCollection(data)
+                return LanguageModelsCollection(**data)
         else:
 
+            print("No existing json file. Pulling data remotely.")
             ollama_url = "https://ollama.com"
 
             models = fetch_model_list(url=ollama_url)

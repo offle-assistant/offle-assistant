@@ -17,14 +17,14 @@ from offle_assistant.models import (
 async def add_model(
     llm: ModelDetails,
     db: AsyncIOMotorDatabase
-) -> ObjectId:
+) -> str:
     """
         Adds a new model entry to the database.
     """
     result = await db.allowed_models.insert_one(
         llm.model_dump(exclude={"id"})
     )
-    return result.inserted_id
+    return str(result.inserted_id)
 
 
 ############################
