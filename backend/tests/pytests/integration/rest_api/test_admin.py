@@ -233,7 +233,7 @@ async def test_get_available_models_success(
     headers = {"Authorization": "Bearer dummy_token"}
 
     available_models_response = await test_client.get(
-        "/admin/available-models",
+        "/models/available",
         headers=headers
     )
 
@@ -273,7 +273,7 @@ async def test_set_allowed_model_success(
     payload = new_model.model_dump()
 
     add_model_response = await test_client.post(
-        "/admin/model",
+        "/models/allowed",
         headers=headers,
         json=payload,
     )
@@ -313,7 +313,7 @@ async def test_pull_allowed_models_success(
     payload = new_model.model_dump()
 
     add_model_response = await test_client.post(
-        "/admin/model",
+        "/models/allowed",
         headers=headers,
         json=payload,
     )
@@ -324,10 +324,66 @@ async def test_pull_allowed_models_success(
     assert ObjectId.is_valid(data["model_id"])
 
     pull_response = await test_client.post(
-        "/admin/available-models/pull",
+        "/models/allowed/pull",
         headers=headers,
     )
 
     assert pull_response.status_code == 200
     data = pull_response.json()
     assert data["message"] == "Models pulled successfully"
+
+
+@pytest.mark.asyncio
+async def test_get_allowed_models_success(
+    test_client,
+    test_db,
+    override_get_current_user_admin,
+    override_get_current_user_normal_user,
+):
+    app.dependency_overrides[get_current_user] = (
+        override_get_current_user_admin
+    )
+
+    tag_info: TagInfo = TagInfo(
+        name="1b-instruct-q2_K",
+        hash="3718017cfd4e",
+        size="581MB",
+        updated="5 months ago"
+    )
+
+    new_model: ModelDetails = ModelDetails(
+        name="llama3.2",
+        provider="meta",
+        api="ollama",
+        tags=[tag_info]
+    )
+
+    headers = {"Authorization": "Bearer dummy_token"}
+
+    payload = new_model.model_dump()
+
+    add_model_response = await test_client.post(
+        "/models/allowed",
+        headers=headers,
+        json=payload,
+    )
+
+    assert add_model_response.status_code == 200
+    data = add_model_response.json()
+    assert data["message"] == "Model added successfully"
+    assert ObjectId.is_valid(data["model_id"])
+
+    app.dependency_overrides[get_current_user] = (
+        override_get_current_user_normal_user
+    )
+
+    get_allowed_models_response = await test_client.get(
+        "/models/allowed",
+        headers=headers
+    )
+
+    assert get_allowed_models_response.status_code == 200
+    data = get_allowed_models_response.json()
+
+    assert data["models"][0]["name"] == "llama3.2"
+    assert len(data["models"]) > 0

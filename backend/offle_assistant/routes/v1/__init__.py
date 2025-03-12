@@ -15,6 +15,10 @@ from ._admin import (
     update_user_role,
 )
 
+from ._language_models import (
+    models_router
+)
+
 from ._personas import (
     personas_router
 )
@@ -43,4 +47,5 @@ __all__ = [
     "groups_router",
     "documents_router",
     "message_history_router",
+    "models_router"
 ]
