@@ -6,8 +6,10 @@ from pymongo.results import UpdateResult, DeleteResult
 
 from offle_assistant.models import (
     UserModel,
-    Role
+    Role,
+    GroupModel
 )
+from ._groups import get_default_group, create_group
 
 
 ############################

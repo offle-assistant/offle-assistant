@@ -43,16 +43,48 @@ async def register_user(
         username=user.username,
         db=db
     )
-    if existing_user:  # Checks if a user exists by email
+    if existing_user:  # Checks if a user exists by username
         raise HTTPException(
             status_code=400,
             detail="Username already registered"
         )
 
+    # PROBLEM BELOW: This should really be an atomic operation.
+    # If the server goes down before creating the user but after
+    # creating the group, then you won't be able to create the user.
+    # The solution is to wrap this all up in a transaction. But it
+    # requires some planning to set up a replica set.
+
     default_group_dict = await database.get_default_group(db)
     default_group: GroupModel = GroupModel(**default_group_dict)
 
+    existing_group = await database.get_group_by_name(
+        group_name=user.username,
+        db=db
+    )
+
+    if existing_group:  # Checks if a group exists by group name
+        raise HTTPException(
+            status_code=400,
+            detail="Group already exists for this username."
+        )
+    user_group: GroupModel = GroupModel(
+        name=user.username,
+        description="Default user group"
+    )
+    user_group_id = await database.create_group(
+        group=user_group,
+        db=db
+    )
+
+    if not user_group_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not create user group."
+        )
+
     default_group_name = default_group.name
+    user_group_name = user_group.name
 
     # Create a new user.
     hashed_password = hash_password(user.password)
@@ -60,7 +92,7 @@ async def register_user(
         email=user.email,
         hashed_password=hashed_password,
         username=user.username,
-        groups=[default_group_name],
+        groups=[default_group_name, user_group_name],
         role="user"
     )
 
